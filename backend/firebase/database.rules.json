@@ -1,0 +1,16 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sme": {
+      "status": {
+        ".read": true,
+        ".write": false
+      },
+      "history": {
+        ".read": "auth != null",
+        ".write": false
+      }
+    }
+  }
+}

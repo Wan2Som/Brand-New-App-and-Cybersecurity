@@ -1,0 +1,287 @@
+{
+  "version": "1.0.0",
+  "framework": "NIST SP 800-61 Rev. 3 (incident response, aligned to CSF 2.0) and the CISA #StopRansomware Guide, simplified for non-technical SME owners.",
+  "reviewNote": "Pre-vetted content. The AI may rephrase these steps but may never add, remove or reorder them. Have a qualified professional review before production use.",
+
+  "escalation": {
+    "title": "Get a human expert",
+    "contacts": [
+      { "name": "Cyber999 (MyCERT, CyberSecurity Malaysia)", "detail": "Hotline 1-300-88-2999, 24/7 emergency +6019-266 5850", "phone": "1300882999", "url": "https://www.mycert.org.my","purpose": "Hacking, malware, ransomware, data leaks" },
+      { "name": "National Scam Response Centre (NSRC)", "detail": "Call 997", "phone": "997", "purpose": "Money already transferred to scammers" },
+      { "name": "Your IT vendor / managed service provider", "detail": "Use the number on your support contract", "purpose": "Hands-on cleanup of your devices" }
+    ],
+    "preserveEvidence": "Until an expert arrives: keep the affected computer switched ON but disconnected from the network, and do not delete anything. Memory (RAM) holds evidence that is lost on shutdown."
+  },
+
+  "playbooks": {
+    "ransomware": {
+      "id": "ransomware",
+      "name": "Ransomware",
+      "plainName": "Your files are being locked by criminals who will demand payment",
+      "threatTypes": ["RANSOMWARE"],
+      "references": ["CISA #StopRansomware Guide - Detection & Analysis, steps 1-3", "NIST CSF 2.0 RS.MI-01 (contain), RS.AN-03 (analyse)"],
+      "doNot": [
+        "Do not switch the computer off or restart it.",
+        "Do not pay or reply to the criminals before speaking to an expert.",
+        "Do not plug backup drives into any computer."
+      ],
+      "containment": [
+        {
+          "id": "rw-isolate",
+          "title": "Cut the network",
+          "instruction": "Pull the network (ethernet) cable out of {deviceId} and switch its Wi-Fi off.",
+          "why": "The locking spreads through the network to other PCs and shared folders. No connection, no spread.",
+          "confirmLabel": "I unplugged it"
+        },
+        {
+          "id": "rw-keep-on",
+          "title": "Leave it switched on",
+          "instruction": "Leave {deviceId} switched ON. Do not restart it or close any windows.",
+          "why": "The key to unlock your files sometimes sits in the computer's memory, and it vanishes if you turn it off.",
+          "confirmLabel": "It's still on"
+        },
+        {
+          "id": "rw-protect-backups",
+          "title": "Protect your backups",
+          "instruction": "Unplug any backup drive or shared storage box (NAS) from the network and from every computer.",
+          "why": "Ransomware hunts for backups first so you have no choice but to pay.",
+          "confirmLabel": "Backups are disconnected"
+        },
+        {
+          "id": "rw-warn-staff",
+          "title": "Warn your team",
+          "instruction": "Tell everyone to stop using shared folders and not to open files until you give the all-clear.",
+          "why": "Opening a locked file on another PC can spread the problem.",
+          "confirmLabel": "Team has been told"
+        },
+        {
+          "id": "rw-record",
+          "title": "Record the evidence",
+          "instruction": "Take a phone photo of any ransom message on screen. Do not reply to it.",
+          "why": "Investigators and insurers need it, and the message often identifies the gang.",
+          "confirmLabel": "Photo taken"
+        }
+      ],
+      "learn": {
+        "analogy": "It is like a burglar who does not steal your filing cabinet but snaps their own padlock on it, then offers to sell you the key.",
+        "howItHappened": "Criminals usually get in through a fake email attachment, a stolen password, or an unprotected remote-access connection. Once inside, a program quietly locks every file it can reach and leaves a note.",
+        "businessImpact": "Invoices, payroll and customer records become unusable until they are restored. Paying does not guarantee you get them back."
+      },
+      "prevent": [
+        { "id": "offline-backup", "title": "Daily offline backups", "description": "Back up every night to storage that is disconnected afterwards, so criminals cannot reach it.", "actionLabel": "Schedule offline backup" },
+        { "id": "enforce-2fa", "title": "Two-step login for everyone", "description": "A stolen password alone will no longer get anyone in.", "actionLabel": "Enforce 2FA now" },
+        { "id": "auto-updates", "title": "Automatic security updates", "description": "Close the known holes criminals scan for every day.", "actionLabel": "Turn on auto-updates" }
+      ]
+    },
+
+    "brute_force": {
+      "id": "brute_force",
+      "name": "Password-guessing attack",
+      "plainName": "Someone is trying thousands of passwords to break into an account",
+      "threatTypes": ["BRUTE_FORCE"],
+      "references": ["NIST SP 800-61r3 / CSF 2.0 RS.MI-01 (contain)", "NIST CSF 2.0 PR.AA-03 (authenticate users)"],
+      "doNot": [
+        "Do not reuse the old password anywhere.",
+        "Do not change passwords from the computer being attacked."
+      ],
+      "containment": [
+        {
+          "id": "bf-change-password",
+          "title": "Change the password",
+          "instruction": "Using a different, trusted device (e.g. your phone), change the password of the account being attacked. Make it a long phrase you have never used.",
+          "why": "If they already guessed it, this locks them back out.",
+          "confirmLabel": "Password changed"
+        },
+        {
+          "id": "bf-sign-out",
+          "title": "Kick out other sessions",
+          "instruction": "In that account's security settings, choose 'Sign out of all sessions' (Google: 'Sign out everywhere'; Microsoft 365: 'Sign out everywhere').",
+          "why": "Anyone already logged in stays logged in until you do this, even after a password change.",
+          "confirmLabel": "Everyone signed out"
+        },
+        {
+          "id": "bf-block-source",
+          "title": "Block the attacker",
+          "instruction": "Ask your IT vendor to block {sourceIp} on your router or firewall. If no one is available, pull the network cable out of {deviceId} for now.",
+          "why": "This stops the guessing at the door.",
+          "confirmLabel": "Blocked or unplugged"
+        },
+        {
+          "id": "bf-check-account",
+          "title": "Look for changes",
+          "instruction": "Check the account for anything you did not do: new email forwarding rules, new users, changed bank details or sent emails.",
+          "why": "Attackers often set up a quiet email forward to keep spying after they are locked out.",
+          "confirmLabel": "I checked"
+        }
+      ],
+      "learn": {
+        "analogy": "It is like someone standing at your shop door trying every key on a giant key ring, very fast, all night.",
+        "howItHappened": "Automated tools try common and leaked passwords against any login that faces the internet, such as email, remote desktop or the shop system.",
+        "businessImpact": "One correct guess gives them your email, customer data and the ability to send fake invoices in your name."
+      },
+      "prevent": [
+        { "id": "enforce-2fa", "title": "Two-step login for everyone", "description": "Even a correct password guess is useless without the code on your phone.", "actionLabel": "Enforce 2FA now" },
+        { "id": "account-lockout", "title": "Lock accounts after 5 wrong tries", "description": "Turns a million guesses into five.", "actionLabel": "Enable account lockout" },
+        { "id": "block-ip", "title": "Block this attacker for good", "description": "Add {sourceIp} to your permanent firewall blocklist.", "actionLabel": "Block {sourceIp}" }
+      ]
+    },
+
+    "suspicious_ip": {
+      "id": "suspicious_ip",
+      "name": "Connection to a criminal server",
+      "plainName": "A computer is talking to an address known to be used by criminals",
+      "threatTypes": ["SUSPICIOUS_IP"],
+      "references": ["NIST SP 800-61r3 / CSF 2.0 RS.MI-01 (contain)", "NIST CSF 2.0 DE.CM-01 (monitor networks)"],
+      "doNot": [
+        "Do not switch the computer off.",
+        "Do not log in to banking or email from that computer."
+      ],
+      "containment": [
+        {
+          "id": "ip-isolate",
+          "title": "Cut the network",
+          "instruction": "Pull the network cable out of {deviceId} and switch its Wi-Fi off.",
+          "why": "This stops the hidden program from receiving orders or sending your data out.",
+          "confirmLabel": "I unplugged it"
+        },
+        {
+          "id": "ip-keep-on",
+          "title": "Leave it switched on",
+          "instruction": "Keep {deviceId} switched ON and do not restart it.",
+          "why": "Experts can see what the program is doing only while it is still running in memory.",
+          "confirmLabel": "It's still on"
+        },
+        {
+          "id": "ip-recall",
+          "title": "Remember what happened",
+          "instruction": "Write down what the person using {deviceId} did today: emails opened, links clicked, files downloaded, USB sticks used.",
+          "why": "It tells us how the program got in, so it does not happen again.",
+          "confirmLabel": "Written down"
+        },
+        {
+          "id": "ip-reset-passwords",
+          "title": "Change passwords elsewhere",
+          "instruction": "From a different, trusted device, change the passwords for email and banking that were used on {deviceId}.",
+          "why": "Hidden programs often record what you type.",
+          "confirmLabel": "Passwords changed"
+        }
+      ],
+      "learn": {
+        "analogy": "It is like finding out one of your office phones has been secretly dialling a criminal's number every few minutes to ask for instructions.",
+        "howItHappened": "A hidden program, usually from an email attachment or fake download, was phoning home to a server the criminals control.",
+        "businessImpact": "The criminals can watch, steal files or install ransomware later, at a time that suits them."
+      },
+      "prevent": [
+        { "id": "block-ip", "title": "Block the criminal server", "description": "Add {sourceIp} to your firewall blocklist so no PC can reach it again.", "actionLabel": "Block {sourceIp}" },
+        { "id": "endpoint-protection", "title": "Protection on every PC", "description": "Install business antivirus (endpoint protection) that blocks known bad programs.", "actionLabel": "Deploy endpoint protection" },
+        { "id": "phishing-training", "title": "5-minute staff lesson", "description": "Teach the team to spot fake emails and downloads.", "actionLabel": "Send phishing lesson" }
+      ]
+    },
+
+    "data_exfiltration": {
+      "id": "data_exfiltration",
+      "name": "Data being stolen",
+      "plainName": "A large amount of your data is being sent out of the business",
+      "threatTypes": ["DATA_EXFILTRATION"],
+      "references": ["NIST SP 800-61r3 / CSF 2.0 RS.MI-01 (contain), RS.CO-02 (notify)", "Malaysia PDPA (as amended 2024) breach notification"],
+      "doNot": [
+        "Do not delete logs or files to 'clean up'.",
+        "Do not contact customers before you know what was taken."
+      ],
+      "containment": [
+        {
+          "id": "ex-isolate",
+          "title": "Cut the network",
+          "instruction": "Pull the network cable out of {deviceId} and switch its Wi-Fi off.",
+          "why": "Every second connected, more data leaves.",
+          "confirmLabel": "I unplugged it"
+        },
+        {
+          "id": "ex-keep-on",
+          "title": "Leave it switched on",
+          "instruction": "Keep {deviceId} switched ON and do not restart it.",
+          "why": "The record of what was sent and where is still in memory.",
+          "confirmLabel": "It's still on"
+        },
+        {
+          "id": "ex-inventory",
+          "title": "List what was on it",
+          "instruction": "Write down what kind of data {deviceId} could reach: customer lists, IC numbers, payroll, card details, contracts.",
+          "why": "This decides who you may legally need to inform.",
+          "confirmLabel": "I've listed it"
+        },
+        {
+          "id": "ex-legal",
+          "title": "Start the legal clock",
+          "instruction": "Note the time now. If personal data was involved, Malaysia's PDPA may require you to notify the Personal Data Protection Commissioner within 72 hours. Call your advisor or Cyber999 today.",
+          "why": "Missing the deadline can bring penalties on top of the breach itself.",
+          "confirmLabel": "Time noted"
+        }
+      ],
+      "learn": {
+        "analogy": "It is like noticing a delivery van backing up to your stockroom at midnight and loading boxes you never sold.",
+        "howItHappened": "Someone with access, either a criminal using stolen login details or hidden software, copied files and uploaded them to an outside server.",
+        "businessImpact": "Stolen customer data can lead to fines, lost trust and blackmail threats to publish it."
+      },
+      "prevent": [
+        { "id": "upload-alerts", "title": "Alerts on big uploads", "description": "Get a phone alert whenever unusually large amounts of data leave the office.", "actionLabel": "Turn on upload alerts" },
+        { "id": "enforce-2fa", "title": "Two-step login for everyone", "description": "Stolen passwords stop being enough to get at your data.", "actionLabel": "Enforce 2FA now" },
+        { "id": "least-access", "title": "Need-to-know access", "description": "Staff only get the folders their job needs, so one breach exposes less.", "actionLabel": "Review folder access" }
+      ]
+    },
+
+    "universal": {
+      "id": "universal",
+      "name": "Unrecognised threat",
+      "plainName": "Something unusual and serious happened that does not match a known attack",
+      "threatTypes": ["UNKNOWN_ANOMALY"],
+      "isFallback": true,
+      "references": ["NIST SP 800-61r3 / CSF 2.0 RS.MI-01 (contain)", "CISA guidance: isolate, preserve volatile memory, escalate"],
+      "doNot": [
+        "Do not switch the computer off or restart it. Memory holds evidence.",
+        "Do not try to 'fix' it by deleting files or running cleaner tools.",
+        "Do not log in to other accounts from that computer."
+      ],
+      "containment": [
+        {
+          "id": "un-isolate",
+          "title": "Cut the network",
+          "instruction": "Pull the network cable out of {deviceId} and switch its Wi-Fi off.",
+          "why": "Whatever it is, disconnecting stops it spreading or calling home. This is safe for every type of attack.",
+          "confirmLabel": "I unplugged it"
+        },
+        {
+          "id": "un-preserve-ram",
+          "title": "Preserve the evidence",
+          "instruction": "Keep {deviceId} switched ON and plugged into power. Do not restart, sleep or log out.",
+          "why": "The computer's memory (RAM) holds clues that disappear the moment it powers off. Experts need it to identify unknown threats.",
+          "confirmLabel": "It's on and untouched"
+        },
+        {
+          "id": "un-notes",
+          "title": "Write down what you saw",
+          "instruction": "Note the time, what was on screen, and anything odd staff noticed in the last day (pop-ups, slowness, strange emails).",
+          "why": "Small details help experts work out what happened much faster.",
+          "confirmLabel": "Notes written"
+        },
+        {
+          "id": "un-escalate",
+          "title": "Call an expert",
+          "instruction": "Press 'Escalate to a human expert' below and contact Cyber999 or your IT vendor. Unknown threats need a professional to look at the machine.",
+          "why": "We could not match this to a known attack, so a person must investigate before it is used again.",
+          "confirmLabel": "I've contacted an expert"
+        }
+      ],
+      "learn": {
+        "analogy": "It is like a smoke alarm going off with no obvious fire: you get people out and call the fire brigade before you go hunting for the cause.",
+        "howItHappened": "The sensor saw a critical event, such as security logs being wiped or a system component being tampered with, that does not match a known attack pattern.",
+        "businessImpact": "Unknown problems can be the early sign of a serious attack. Treating it seriously now is far cheaper than recovering later."
+      },
+      "prevent": [
+        { "id": "endpoint-protection", "title": "Protection on every PC", "description": "Business antivirus that detects and blocks suspicious behaviour automatically.", "actionLabel": "Deploy endpoint protection" },
+        { "id": "auto-updates", "title": "Automatic security updates", "description": "Close known holes before criminals use them.", "actionLabel": "Turn on auto-updates" },
+        { "id": "offline-backup", "title": "Daily offline backups", "description": "Whatever happens next, you can restore your business.", "actionLabel": "Schedule offline backup" }
+      ]
+    }
+  }
+}
