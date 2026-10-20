@@ -66,7 +66,7 @@ export default function useChat(state, language = 'en') {
           setAiSource(result.source);
           append({ role: 'assistant', content: result.reply, source: result.source });
         } catch (err) {
-          append({ role: 'assistant', source: 'error', i18nKey: 'chat.unreachable', vars: { message: err.message } });
+          append({ role: 'assistant', source: 'error', i18nKey: 'chat.unreachable', error: { status: err.status } });
         } finally {
           pendingRef.current -= 1;
           if (pendingRef.current === 0) setIsLoading(false);

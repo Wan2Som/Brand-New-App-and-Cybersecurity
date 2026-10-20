@@ -18,6 +18,7 @@ export default function TopBar({ connected, transport, themePreference, onThemeC
             </svg>
           </span>
           <span className="brand__name">{t('brand')}</span>
+          <span className="brand__tagline">{t('tagline')}</span>
         </div>
 
         <div className="topbar__actions">

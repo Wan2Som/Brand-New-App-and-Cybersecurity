@@ -1,5 +1,5 @@
 import { currentStep, durationBetween, playbookFor } from '@/lib/incident';
-import { localize, useI18n } from '@/lib/i18n';
+import { errorText, localize, useI18n } from '@/lib/i18n';
 
 /**
  * The step placard. Shows exactly one thing to do, and the button the owner
@@ -30,7 +30,7 @@ export default function ActionCard({ state, busy, error, onConfirm, onAcknowledg
 
       {error && (
         <p className="card__error" role="alert">
-          {t('card.actionFailed', { message: error })}
+          {t('card.actionFailed', { message: errorText(t, error) })}
         </p>
       )}
 

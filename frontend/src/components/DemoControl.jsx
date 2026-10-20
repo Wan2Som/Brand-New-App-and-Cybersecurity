@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useI18n } from '@/lib/i18n';
+import { errorText, useI18n } from '@/lib/i18n';
 
 /**
  * Presenter panel for live judging: fire a canned attack through the real
@@ -15,7 +15,7 @@ export default function DemoControl({ loadScenarios, onSimulate, onReset, busy, 
     if (!open || scenarios.length) return;
     loadScenarios()
       .then((data) => setScenarios(data.scenarios))
-      .catch((err) => setLoadError(err.message));
+      .catch((err) => setLoadError(err));
   }, [open, scenarios.length, loadScenarios]);
 
   // Scenario names come from the backend in English; show ours when we have a translation.
@@ -41,7 +41,7 @@ export default function DemoControl({ loadScenarios, onSimulate, onReset, busy, 
       {open && (
         <div className="demo__panel">
           <h2>{t('demo.title')}</h2>
-          {loadError && <p className="demo__error">{t('demo.loadError', { message: loadError })}</p>}
+          {loadError && <p className="demo__error">{t('demo.loadError', { message: errorText(t, loadError) })}</p>}
           <ul className="demo__list">
             {scenarios.map((s) => (
               <li key={s.id}>

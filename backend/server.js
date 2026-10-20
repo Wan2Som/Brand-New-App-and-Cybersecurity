@@ -33,7 +33,7 @@ if (require.main === module) {
   ready
     .then(() => {
       const server = app.listen(config.port, () => {
-        console.log(`[server] SME Cyber Responder API on http://localhost:${config.port}`);
+        console.log(`[server] Siaga API on http://localhost:${config.port}`);
         console.log(
           `[server] Realtime transport: ${firebase.getMode()} | AI: ${gemini.isConfigured() ? config.gemini.model : 'playbook-only (no GEMINI_API_KEY)'}`,
         );

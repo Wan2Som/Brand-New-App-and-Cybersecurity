@@ -3,12 +3,22 @@
  */
 import { API_URL } from './config';
 
+// Errors carry `status` (HTTP code, or 0 when the server couldn't be reached).
+// The UI shows its own translated text for them (errorText in lib/i18n);
+// `message` keeps the backend's English detail for debugging.
 async function request(path, { method = 'GET', body } = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (err) {
+    const error = new Error(err.message || 'Network error');
+    error.status = 0;
+    throw error;
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(data.error || `Request failed (${response.status})`);

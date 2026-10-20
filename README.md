@@ -1,4 +1,4 @@
-# SME Cyber Responder (MVP)
+# Siaga: SME Cyber Responder (MVP)
 
 An interactive cyber incident response platform for Malaysian SMEs. When an attack hits, a non-technical owner is walked through **Hack → Fix → Learn → Prevent**, one physical step at a time, with an AI guide that can advise but never act on its own.
 
@@ -173,7 +173,7 @@ Frosted-glass panels over a soft colour backdrop that follows the security statu
 
 ## Configuration
 
-**Backend `.env`:** `AGENT_SHARED_SECRET`, `DEMO_MODE`, `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-3.8-flash`), `GEMINI_THINKING_LEVEL`, `FIREBASE_DATABASE_URL`, `FIREBASE_SERVICE_ACCOUNT_PATH`. See `backend/.env.example`.
+**Backend `.env`:** `AGENT_SHARED_SECRET`, `DEMO_MODE`, `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-3.8-flash`), `GEMINI_FALLBACK_MODEL` (optional, tried once if the main model is overloaded), `GEMINI_THINKING_LEVEL`, `GEMINI_TIMEOUT_MS`, `FIREBASE_DATABASE_URL`, `FIREBASE_SERVICE_ACCOUNT_PATH`. See `backend/.env.example`.
 
 **Frontend `.env.local`:** `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_DEMO_MODE`, and the `NEXT_PUBLIC_FIREBASE_*` web config. With a Firebase database URL set, the dashboard listens with `onValue`; otherwise it uses SSE.
 
@@ -201,7 +201,7 @@ Frosted-glass panels over a soft colour backdrop that follows the security statu
 
 ```bash
 cd agent && python -m unittest discover -s tests     # 15 detector tests
-cd backend && npm test                               # 27 tests: state machine, Gemini, guardrails, CORS, Firebase key, translations
+cd backend && npm test                               # 31 tests: state machine, Gemini, guardrails, CORS, Firebase key, translations
 ```
 
 ## Before going beyond a hackathon

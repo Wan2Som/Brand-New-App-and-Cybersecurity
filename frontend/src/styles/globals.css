@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SME Cyber Responder - glass visual system (light + dark)
+   Siaga - glass visual system (light + dark)
 
    Frosted, translucent panels float over a soft colour backdrop whose tint
    follows the security status (green / red / amber), so the whole screen
@@ -268,6 +268,15 @@ button:disabled {
   gap: 10px;
   font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+.brand__tagline {
+  padding-left: 10px;
+  border-left: 1px solid var(--hairline);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-2);
 }
 
 .brand__mark {
@@ -1350,7 +1359,8 @@ button:disabled {
 
 @media (max-width: 640px) {
   .segmented__label,
-  .brand__name {
+  .brand__name,
+  .brand__tagline {
     display: none;
   }
 

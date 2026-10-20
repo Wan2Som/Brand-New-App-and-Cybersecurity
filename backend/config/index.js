@@ -38,6 +38,8 @@ const config = {
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || '',
     model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+    // Optional: tried once when the main model is overloaded (HTTP 500/503).
+    fallbackModel: process.env.GEMINI_FALLBACK_MODEL || '',
     // Gemini 3+ thinking level ("low" | "medium" | "high"). Empty = model default.
     thinkingLevel: process.env.GEMINI_THINKING_LEVEL ?? 'low',
     maxOutputTokens: int(process.env.GEMINI_MAX_OUTPUT_TOKENS, 2048),

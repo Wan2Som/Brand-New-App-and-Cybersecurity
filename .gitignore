@@ -6,3 +6,7 @@ __pycache__/
 *.pyc
 agent/logs/
 *service-account*.json
+*firebase-key*.json
+*firebase-adminsdk*.json
+*.exe
+.claude/settings.local.json

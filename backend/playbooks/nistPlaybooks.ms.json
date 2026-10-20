@@ -110,7 +110,7 @@
         },
         "bf-block-source": {
           "title": "Sekat penyerang",
-          "instruction": "Minta vendor IT anda menyekat {sourceIp} pada router atau firewall. Jika tiada sesiapa, cabut kabel rangkaian daripada {deviceId} buat sementara.",
+          "instruction": "Minta vendor IT anda menyekat {sourceIp} pada penghala (router) atau tembok api (firewall). Jika tiada sesiapa, cabut kabel rangkaian daripada {deviceId} buat sementara.",
           "why": "Ini menghentikan cubaan meneka di pintu masuk.",
           "confirmLabel": "Sudah disekat atau dicabut"
         },
@@ -139,7 +139,7 @@
         },
         "block-ip": {
           "title": "Sekat penyerang ini selama-lamanya",
-          "description": "Tambah {sourceIp} ke senarai sekatan firewall kekal anda.",
+          "description": "Tambah {sourceIp} ke senarai sekatan tembok api (firewall) kekal anda.",
           "actionLabel": "Sekat {sourceIp}"
         }
       }
@@ -186,13 +186,13 @@
       "prevent": {
         "block-ip": {
           "title": "Sekat pelayan penjenayah",
-          "description": "Tambah {sourceIp} ke senarai sekatan firewall supaya tiada PC boleh mencapainya lagi.",
+          "description": "Tambah {sourceIp} ke senarai sekatan tembok api (firewall) supaya tiada PC boleh mencapainya lagi.",
           "actionLabel": "Sekat {sourceIp}"
         },
         "endpoint-protection": {
           "title": "Perlindungan pada setiap PC",
-          "description": "Pasang antivirus perniagaan (perlindungan endpoint) yang menyekat program jahat yang diketahui.",
-          "actionLabel": "Pasang perlindungan endpoint"
+          "description": "Pasang antivirus perniagaan yang menyekat program jahat yang diketahui.",
+          "actionLabel": "Pasang antivirus"
         },
         "phishing-training": {
           "title": "Pelajaran 5 minit untuk pekerja",
@@ -302,7 +302,7 @@
         "endpoint-protection": {
           "title": "Perlindungan pada setiap PC",
           "description": "Antivirus perniagaan yang mengesan dan menyekat tingkah laku mencurigakan secara automatik.",
-          "actionLabel": "Pasang perlindungan endpoint"
+          "actionLabel": "Pasang antivirus"
         },
         "auto-updates": {
           "title": "Kemas kini keselamatan automatik",

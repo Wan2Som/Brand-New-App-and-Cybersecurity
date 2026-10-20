@@ -1,5 +1,5 @@
 import renderMarkdown from '@/lib/renderMarkdown';
-import { useI18n } from '@/lib/i18n';
+import { errorText, useI18n } from '@/lib/i18n';
 
 const SOURCE_KEYS = {
   gemini: 'chat.sourceGemini',
@@ -14,8 +14,8 @@ const SOURCE_KEYS = {
  */
 export default function ChatMessage({ message }) {
   const { t } = useI18n();
-  const { role, source, i18nKey, vars } = message;
-  const content = i18nKey ? t(i18nKey, vars) : message.content;
+  const { role, source, i18nKey, vars, error } = message;
+  const content = i18nKey ? t(i18nKey, error ? { ...vars, message: errorText(t, error) } : vars) : message.content;
   const labelKey = role === 'assistant' ? SOURCE_KEYS[source] : null;
 
   return (

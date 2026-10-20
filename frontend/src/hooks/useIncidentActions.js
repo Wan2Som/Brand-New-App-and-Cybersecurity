@@ -16,7 +16,7 @@ export default function useIncidentActions() {
       return await fn();
     } catch (err) {
       // 409 = someone already advanced this step (e.g. a second screen); state will resync.
-      if (err.status !== 409) setError(err.message);
+      if (err.status !== 409) setError(err);
       return null;
     } finally {
       setBusy(null);

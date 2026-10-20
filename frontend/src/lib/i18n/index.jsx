@@ -26,6 +26,14 @@ export function translate(lang, key, vars) {
   return typeof value === 'string' ? interpolate(value, vars) : key;
 }
 
+/** A failed API call in the viewer's language (the backend's own error text is English-only). */
+export function errorText(t, error) {
+  const status = error?.status;
+  if (!status) return t('errors.network');
+  if (status === 429) return t('errors.busy');
+  return t('errors.server', { status });
+}
+
 /** Pick the right language view of a backend object that carries `translations`. */
 export function localize(item, lang) {
   if (!item) return item;

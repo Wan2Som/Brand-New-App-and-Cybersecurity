@@ -7,8 +7,9 @@
  * Malay key falls back to English automatically.
  */
 const en = {
-  brand: 'Cyber Responder',
-  title: { normal: 'Cyber Responder', alarm: '⚠ Under attack | Cyber Responder' },
+  brand: 'Siaga',
+  tagline: 'Cyber Responder',
+  title: { normal: 'Siaga | Cyber Responder', alarm: '⚠ Under attack | Siaga' },
   topbar: { nav: 'App', live: 'Sensor live', reconnecting: 'Reconnecting' },
   theme: { group: 'Colour theme', light: 'Light', dark: 'Dark', auto: 'Auto', autoTitle: 'Match my device', modeTitle: '{mode} mode' },
   language: { group: 'Language', en: 'EN', ms: 'BM', enTitle: 'English', msTitle: 'Bahasa Melayu' },
@@ -136,6 +137,12 @@ const en = {
       'I couldn\'t reach the guidance service ({message}). Follow the step card on screen, or press "Escalate to a human expert".',
   },
 
+  errors: {
+    network: "Can't reach the server. Check your internet connection",
+    busy: 'Too many requests. Wait a few seconds and try again',
+    server: 'Something went wrong on the server (error {status})',
+  },
+
   moment: { allClear: 'All clear. Your business is protected.' },
   link: { lost: 'Lost connection to the monitoring service. Reconnecting…' },
 
@@ -162,10 +169,11 @@ const en = {
 };
 
 const ms = {
-  brand: 'Cyber Responder',
-  title: { normal: 'Cyber Responder', alarm: '⚠ Sedang diserang | Cyber Responder' },
+  brand: 'Siaga',
+  tagline: 'Tindak Balas Siber',
+  title: { normal: 'Siaga | Tindak Balas Siber', alarm: '⚠ Sedang diserang | Siaga' },
   topbar: { nav: 'Aplikasi', live: 'Sensor aktif', reconnecting: 'Menyambung semula' },
-  theme: { group: 'Tema warna', light: 'Cerah', dark: 'Gelap', auto: 'Auto', autoTitle: 'Ikut peranti saya', modeTitle: 'Mod {mode}' },
+  theme: { group: 'Tema warna', light: 'Cerah', dark: 'Gelap', auto: 'Automatik', autoTitle: 'Ikut peranti saya', modeTitle: 'Mod {mode}' },
   language: { group: 'Bahasa', en: 'EN', ms: 'BM', enTitle: 'English', msTitle: 'Bahasa Melayu' },
 
   status: {
@@ -250,10 +258,10 @@ const ms = {
     attackerAddress: 'Alamat penyerang',
     'enforce-2fa': 'Pengesahan dua langkah diwajibkan untuk semua akaun pekerja pada log masuk seterusnya.',
     'account-lockout': 'Akaun kini dikunci selama 15 minit selepas 5 kata laluan salah.',
-    'block-ip': '{sourceIp} ditambah ke senarai sekatan firewall.',
+    'block-ip': '{sourceIp} ditambah ke senarai sekatan tembok api (firewall).',
     'offline-backup': 'Sandaran setiap malam dijadualkan pada 11:00 malam ke storan yang diputuskan.',
     'auto-updates': 'Kemas kini keselamatan automatik dihidupkan pada semua PC yang diurus.',
-    'endpoint-protection': 'Pemasangan perlindungan endpoint dijadualkan untuk setiap PC berdaftar.',
+    'endpoint-protection': 'Pemasangan antivirus perniagaan dijadualkan untuk setiap PC berdaftar.',
     'phishing-training': 'Pelajaran kesedaran pancingan data 5 minit dihantar kepada semua pekerja.',
     'upload-alerts': 'Amaran telefon dihidupkan untuk pemindahan keluar melebihi 500 MB.',
     'least-access': 'Senarai semak akses folder disediakan untuk pemilik.',
@@ -291,6 +299,12 @@ const ms = {
       'Saya tidak dapat menghubungi servis panduan ({message}). Ikut kad langkah di skrin, atau tekan "Dapatkan bantuan pakar".',
   },
 
+  errors: {
+    network: 'Tidak dapat menghubungi pelayan. Semak sambungan internet anda',
+    busy: 'Terlalu banyak permintaan. Tunggu beberapa saat dan cuba lagi',
+    server: 'Berlaku masalah pada pelayan (ralat {status})',
+  },
+
   moment: { allClear: 'Semuanya selamat. Perniagaan anda dilindungi.' },
   link: { lost: 'Sambungan ke servis pemantauan terputus. Menyambung semula…' },
 
@@ -301,14 +315,14 @@ const ms = {
     closeAria: 'Sembunyikan kawalan pembentang',
     panelAria: 'Kawalan pembentang',
     title: 'Simulasikan serangan',
-    loadError: 'Tidak dapat memuatkan serangan: {message}. Adakah backend berjalan dengan DEMO_MODE=true?',
+    loadError: 'Tidak dapat memuatkan serangan: {message}. Adakah pelayan (backend) berjalan dengan DEMO_MODE=true?',
     resetFirst: 'Set semula insiden semasa dahulu',
     latency: 'Amaran terakhir sampai ke skrin ini dalam {seconds} s',
     reset: 'Set semula ke selamat',
     resetting: 'Sedang set semula…',
     scenarios: {
       ransomware: { label: 'Perisian tebusan', description: 'Folder invois sedang disulitkan' },
-      brute_force: { label: 'Teka kata laluan', description: '6 log masuk admin gagal dalam beberapa saat' },
+      brute_force: { label: 'Teka kata laluan', description: '6 log masuk pentadbir gagal dalam beberapa saat' },
       suspicious_ip: { label: 'Pelayan penjenayah', description: 'PC menghubungi alamat berbahaya' },
       exfiltration: { label: 'Kecurian data', description: '2 GB dimuat naik ke pelayan tidak dikenali' },
       unknown: { label: 'Anomali tidak dikenali', description: 'Log audit dipadam oleh proses tidak dikenali' },

@@ -14,7 +14,7 @@ const { localize, normalizeLanguage } = require('./playbookService');
 const EVENTS = ['BREACH_OPENED', 'STEP_CONFIRMED', 'ENTER_LEARN', 'ENTER_PREVENT', 'RESOLVED', 'ESCALATED', 'RESUME', 'USER_MESSAGE'];
 const HISTORY_TURNS = 10;
 
-const SYSTEM_PROMPT = `You are the Emergency Responder inside a cyber incident app for Malaysian small businesses (SMEs).
+const SYSTEM_PROMPT = `You are the Emergency Responder inside Siaga, a cyber incident app for Malaysian small businesses (SMEs).
 The person you are talking to is a stressed, NON-TECHNICAL business owner in the middle of a live security incident.
 Your job: translate the pre-vetted NIST/CISA playbook in PLAYBOOK CONTEXT into calm, plain, physical instructions.
 
@@ -120,8 +120,11 @@ function buildUserTurn({ event, message, history, state, lang = 'en' }) {
 
 // --- Gemini REST call --------------------------------------------------------
 
-async function callGemini(userTurn, { withThinking = true } = {}) {
-  const { apiKey, model, endpoint, timeoutMs, maxOutputTokens, thinkingLevel } = config.gemini;
+const OVERLOADED = [500, 503];
+const RETRY_DELAY_MS = 500;
+
+async function callGemini(userTurn, { withThinking = true, model = config.gemini.model, retried = false } = {}) {
+  const { apiKey, fallbackModel, endpoint, timeoutMs, maxOutputTokens, thinkingLevel } = config.gemini;
   const generationConfig = { maxOutputTokens };
   if (withThinking && thinkingLevel) generationConfig.thinkingConfig = { thinkingLevel };
 
@@ -143,7 +146,15 @@ async function callGemini(userTurn, { withThinking = true } = {}) {
       const body = await response.text();
       // Some models reject thinkingConfig; retry once without it.
       if (response.status === 400 && withThinking && /thinking/i.test(body)) {
-        return callGemini(userTurn, { withThinking: false });
+        return callGemini(userTurn, { withThinking: false, model, retried });
+      }
+      // Google returns 503 "high demand" when the model is overloaded; retry once,
+      // on the backup model if one is configured.
+      if (OVERLOADED.includes(response.status) && !retried) {
+        const next = fallbackModel || model;
+        console.warn(`[gemini] ${model} returned HTTP ${response.status}; retrying once with ${next}`);
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        return callGemini(userTurn, { withThinking, model: next, retried: true });
       }
       throw new Error(`Gemini HTTP ${response.status}: ${body.slice(0, 300)}`);
     }

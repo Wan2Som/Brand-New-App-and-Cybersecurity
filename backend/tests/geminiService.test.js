@@ -96,6 +96,36 @@ test('retries without thinkingConfig when the model rejects it', async () => {
   assert.equal(call, 2);
 });
 
+test('an overloaded model (503) is retried once on the fallback model', async () => {
+  config.gemini.apiKey = 'test-key';
+  config.gemini.fallbackModel = 'backup-model';
+  const urls = [];
+  global.fetch = async (url) => {
+    urls.push(url);
+    if (urls.length === 1) return { ok: false, status: 503, text: async () => 'high demand' };
+    return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: 'Press "I unplugged it".' }] } }] }) };
+  };
+  const state = await openRansomware();
+  const result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
+  config.gemini.fallbackModel = '';
+  assert.equal(result.source, 'gemini');
+  assert.equal(urls.length, 2);
+  assert.match(urls[1], /backup-model:generateContent$/);
+});
+
+test('a model that stays overloaded falls back to playbook text after one retry', async () => {
+  config.gemini.apiKey = 'test-key';
+  let call = 0;
+  global.fetch = async () => {
+    call += 1;
+    return { ok: false, status: 503, text: async () => 'high demand' };
+  };
+  const state = await openRansomware();
+  const result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
+  assert.equal(result.source, 'playbook');
+  assert.equal(call, 2);
+});
+
 test('guardrails', () => {
   const cases = [
     ['Please send me your password so I can check.', false],
