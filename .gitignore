@@ -9,4 +9,3 @@ agent/logs/
 *firebase-key*.json
 *firebase-adminsdk*.json
 *.exe
-.claude/settings.local.json
