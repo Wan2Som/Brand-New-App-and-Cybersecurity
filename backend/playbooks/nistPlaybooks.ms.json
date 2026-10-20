@@ -1,0 +1,320 @@
+{
+  "language": "ms",
+  "note": "Terjemahan Bahasa Melayu bagi nistPlaybooks.json. Kunci (id langkah dan tindakan) mesti sama dengan fail Bahasa Inggeris. Medan yang tiada di sini akan guna teks Bahasa Inggeris.",
+
+  "escalation": {
+    "title": "Dapatkan bantuan pakar",
+    "contacts": {
+      "Cyber999 (MyCERT, CyberSecurity Malaysia)": {
+        "detail": "Talian 1-300-88-2999, kecemasan 24/7 +6019-266 5850",
+        "purpose": "Penggodaman, perisian hasad, perisian tebusan, kebocoran data"
+      },
+      "National Scam Response Centre (NSRC)": {
+        "name": "Pusat Respons Scam Kebangsaan (NSRC)",
+        "detail": "Hubungi 997",
+        "purpose": "Wang sudah dipindahkan kepada penipu"
+      },
+      "Your IT vendor / managed service provider": {
+        "name": "Vendor IT / penyedia servis IT anda",
+        "detail": "Guna nombor dalam kontrak sokongan anda",
+        "purpose": "Pembersihan peranti secara langsung"
+      }
+    },
+    "preserveEvidence": "Sementara menunggu pakar: biarkan komputer yang terjejas HIDUP tetapi terputus daripada rangkaian, dan jangan padam apa-apa. Memori (RAM) menyimpan bukti yang hilang apabila komputer dimatikan."
+  },
+
+  "playbooks": {
+    "ransomware": {
+      "name": "Perisian tebusan (ransomware)",
+      "plainName": "Fail anda sedang dikunci oleh penjenayah yang akan meminta wang tebusan",
+      "doNot": [
+        "Jangan matikan atau mulakan semula komputer.",
+        "Jangan bayar atau balas penjenayah sebelum berbincang dengan pakar.",
+        "Jangan cucuk pemacu sandaran (backup) ke mana-mana komputer."
+      ],
+      "containment": {
+        "rw-isolate": {
+          "title": "Putuskan rangkaian",
+          "instruction": "Cabut kabel rangkaian (ethernet) daripada {deviceId} dan matikan Wi-Fi.",
+          "why": "Penguncian merebak melalui rangkaian ke PC lain dan folder kongsi. Tiada sambungan, tiada rebakan.",
+          "confirmLabel": "Saya sudah cabut"
+        },
+        "rw-keep-on": {
+          "title": "Biarkan ia hidup",
+          "instruction": "Biarkan {deviceId} HIDUP. Jangan mulakan semula atau tutup mana-mana tetingkap.",
+          "why": "Kunci untuk membuka fail kadangkala masih ada dalam memori komputer, dan ia hilang jika komputer dimatikan.",
+          "confirmLabel": "Masih hidup"
+        },
+        "rw-protect-backups": {
+          "title": "Lindungi sandaran anda",
+          "instruction": "Cabut sebarang pemacu sandaran atau kotak storan kongsi (NAS) daripada rangkaian dan daripada setiap komputer.",
+          "why": "Perisian tebusan mencari sandaran dahulu supaya anda tiada pilihan selain membayar.",
+          "confirmLabel": "Sandaran sudah dicabut"
+        },
+        "rw-warn-staff": {
+          "title": "Maklumkan pekerja",
+          "instruction": "Beritahu semua orang supaya berhenti guna folder kongsi dan jangan buka sebarang fail sehingga anda beri kebenaran.",
+          "why": "Membuka fail yang dikunci di PC lain boleh merebakkan masalah.",
+          "confirmLabel": "Pekerja sudah dimaklumkan"
+        },
+        "rw-record": {
+          "title": "Rekod bukti",
+          "instruction": "Ambil gambar mesej tebusan di skrin dengan telefon. Jangan balas mesej itu.",
+          "why": "Penyiasat dan syarikat insurans memerlukannya, dan mesej itu selalunya mendedahkan kumpulan penjenayah.",
+          "confirmLabel": "Gambar sudah diambil"
+        }
+      },
+      "learn": {
+        "analogy": "Ia seperti pencuri yang tidak mencuri kabinet fail anda, tetapi memasang mangganya sendiri, kemudian menawarkan untuk menjual kuncinya kepada anda.",
+        "howItHappened": "Penjenayah biasanya masuk melalui lampiran e-mel palsu, kata laluan yang dicuri, atau sambungan akses jauh yang tidak dilindungi. Setelah masuk, satu program mengunci setiap fail yang boleh dicapainya secara senyap dan meninggalkan nota.",
+        "businessImpact": "Invois, gaji dan rekod pelanggan tidak boleh digunakan sehingga dipulihkan. Membayar tidak menjamin anda akan mendapatnya semula."
+      },
+      "prevent": {
+        "offline-backup": {
+          "title": "Sandaran luar talian setiap hari",
+          "description": "Buat sandaran setiap malam ke storan yang diputuskan selepas itu, supaya penjenayah tidak dapat mencapainya.",
+          "actionLabel": "Jadualkan sandaran luar talian"
+        },
+        "enforce-2fa": {
+          "title": "Log masuk dua langkah untuk semua",
+          "description": "Kata laluan yang dicuri sahaja tidak lagi cukup untuk masuk.",
+          "actionLabel": "Wajibkan 2FA sekarang"
+        },
+        "auto-updates": {
+          "title": "Kemas kini keselamatan automatik",
+          "description": "Tutup lubang keselamatan yang diimbas penjenayah setiap hari.",
+          "actionLabel": "Hidupkan kemas kini automatik"
+        }
+      }
+    },
+
+    "brute_force": {
+      "name": "Serangan teka kata laluan",
+      "plainName": "Seseorang sedang mencuba beribu-ribu kata laluan untuk menceroboh akaun",
+      "doNot": [
+        "Jangan guna semula kata laluan lama di mana-mana.",
+        "Jangan tukar kata laluan dari komputer yang sedang diserang."
+      ],
+      "containment": {
+        "bf-change-password": {
+          "title": "Tukar kata laluan",
+          "instruction": "Guna peranti lain yang dipercayai (contohnya telefon anda), tukar kata laluan akaun yang diserang. Gunakan frasa panjang yang belum pernah anda guna.",
+          "why": "Jika mereka sudah meneka kata laluan itu, langkah ini mengunci mereka keluar.",
+          "confirmLabel": "Kata laluan sudah ditukar"
+        },
+        "bf-sign-out": {
+          "title": "Keluarkan sesi lain",
+          "instruction": "Dalam tetapan keselamatan akaun itu, pilih 'Log keluar daripada semua sesi' (Google: 'Sign out everywhere'; Microsoft 365: 'Sign out everywhere').",
+          "why": "Sesiapa yang sudah log masuk kekal di dalam sehingga anda buat ini, walaupun kata laluan sudah ditukar.",
+          "confirmLabel": "Semua sudah dilog keluar"
+        },
+        "bf-block-source": {
+          "title": "Sekat penyerang",
+          "instruction": "Minta vendor IT anda menyekat {sourceIp} pada router atau firewall. Jika tiada sesiapa, cabut kabel rangkaian daripada {deviceId} buat sementara.",
+          "why": "Ini menghentikan cubaan meneka di pintu masuk.",
+          "confirmLabel": "Sudah disekat atau dicabut"
+        },
+        "bf-check-account": {
+          "title": "Semak perubahan",
+          "instruction": "Semak akaun itu untuk apa-apa yang anda tidak buat: peraturan pemajuan e-mel baharu, pengguna baharu, butiran bank yang ditukar atau e-mel yang dihantar.",
+          "why": "Penyerang sering memasang pemajuan e-mel secara senyap untuk terus mengintip selepas dikunci keluar.",
+          "confirmLabel": "Sudah saya semak"
+        }
+      },
+      "learn": {
+        "analogy": "Ia seperti seseorang berdiri di pintu kedai anda dan mencuba setiap kunci pada segugus kunci yang besar, dengan sangat laju, sepanjang malam.",
+        "howItHappened": "Alat automatik mencuba kata laluan biasa dan kata laluan yang pernah bocor pada mana-mana log masuk yang terdedah ke internet, seperti e-mel, akses jauh atau sistem kedai.",
+        "businessImpact": "Satu tekaan yang betul memberi mereka akses kepada e-mel, data pelanggan dan keupayaan menghantar invois palsu atas nama anda."
+      },
+      "prevent": {
+        "enforce-2fa": {
+          "title": "Log masuk dua langkah untuk semua",
+          "description": "Tekaan kata laluan yang betul pun tidak berguna tanpa kod di telefon anda.",
+          "actionLabel": "Wajibkan 2FA sekarang"
+        },
+        "account-lockout": {
+          "title": "Kunci akaun selepas 5 cubaan salah",
+          "description": "Sejuta tekaan menjadi lima sahaja.",
+          "actionLabel": "Hidupkan kunci akaun"
+        },
+        "block-ip": {
+          "title": "Sekat penyerang ini selama-lamanya",
+          "description": "Tambah {sourceIp} ke senarai sekatan firewall kekal anda.",
+          "actionLabel": "Sekat {sourceIp}"
+        }
+      }
+    },
+
+    "suspicious_ip": {
+      "name": "Sambungan ke pelayan penjenayah",
+      "plainName": "Sebuah komputer sedang berhubung dengan alamat yang diketahui digunakan oleh penjenayah",
+      "doNot": [
+        "Jangan matikan komputer.",
+        "Jangan log masuk ke perbankan atau e-mel dari komputer itu."
+      ],
+      "containment": {
+        "ip-isolate": {
+          "title": "Putuskan rangkaian",
+          "instruction": "Cabut kabel rangkaian daripada {deviceId} dan matikan Wi-Fi.",
+          "why": "Ini menghalang program tersembunyi daripada menerima arahan atau menghantar data anda keluar.",
+          "confirmLabel": "Saya sudah cabut"
+        },
+        "ip-keep-on": {
+          "title": "Biarkan ia hidup",
+          "instruction": "Biarkan {deviceId} HIDUP dan jangan mulakan semula.",
+          "why": "Pakar hanya boleh melihat apa yang program itu lakukan semasa ia masih berjalan dalam memori.",
+          "confirmLabel": "Masih hidup"
+        },
+        "ip-recall": {
+          "title": "Ingat apa yang berlaku",
+          "instruction": "Catat apa yang pengguna {deviceId} buat hari ini: e-mel yang dibuka, pautan yang diklik, fail yang dimuat turun, pemacu USB yang digunakan.",
+          "why": "Ia memberitahu kita bagaimana program itu masuk, supaya tidak berulang.",
+          "confirmLabel": "Sudah dicatat"
+        },
+        "ip-reset-passwords": {
+          "title": "Tukar kata laluan di tempat lain",
+          "instruction": "Dari peranti lain yang dipercayai, tukar kata laluan e-mel dan perbankan yang pernah digunakan di {deviceId}.",
+          "why": "Program tersembunyi sering merekod apa yang anda taip.",
+          "confirmLabel": "Kata laluan sudah ditukar"
+        }
+      },
+      "learn": {
+        "analogy": "Ia seperti mendapati salah satu telefon pejabat anda menelefon nombor penjenayah secara rahsia setiap beberapa minit untuk meminta arahan.",
+        "howItHappened": "Satu program tersembunyi, biasanya daripada lampiran e-mel atau muat turun palsu, sedang menghubungi pelayan yang dikawal penjenayah.",
+        "businessImpact": "Penjenayah boleh memerhati, mencuri fail atau memasang perisian tebusan kemudian, pada masa yang sesuai bagi mereka."
+      },
+      "prevent": {
+        "block-ip": {
+          "title": "Sekat pelayan penjenayah",
+          "description": "Tambah {sourceIp} ke senarai sekatan firewall supaya tiada PC boleh mencapainya lagi.",
+          "actionLabel": "Sekat {sourceIp}"
+        },
+        "endpoint-protection": {
+          "title": "Perlindungan pada setiap PC",
+          "description": "Pasang antivirus perniagaan (perlindungan endpoint) yang menyekat program jahat yang diketahui.",
+          "actionLabel": "Pasang perlindungan endpoint"
+        },
+        "phishing-training": {
+          "title": "Pelajaran 5 minit untuk pekerja",
+          "description": "Ajar pekerja mengenal pasti e-mel dan muat turun palsu.",
+          "actionLabel": "Hantar pelajaran pancingan data"
+        }
+      }
+    },
+
+    "data_exfiltration": {
+      "name": "Data sedang dicuri",
+      "plainName": "Sejumlah besar data anda sedang dihantar keluar dari perniagaan",
+      "doNot": [
+        "Jangan padam log atau fail untuk 'membersihkan'.",
+        "Jangan hubungi pelanggan sebelum anda tahu apa yang diambil."
+      ],
+      "containment": {
+        "ex-isolate": {
+          "title": "Putuskan rangkaian",
+          "instruction": "Cabut kabel rangkaian daripada {deviceId} dan matikan Wi-Fi.",
+          "why": "Setiap saat ia bersambung, lebih banyak data keluar.",
+          "confirmLabel": "Saya sudah cabut"
+        },
+        "ex-keep-on": {
+          "title": "Biarkan ia hidup",
+          "instruction": "Biarkan {deviceId} HIDUP dan jangan mulakan semula.",
+          "why": "Rekod tentang apa yang dihantar dan ke mana masih ada dalam memori.",
+          "confirmLabel": "Masih hidup"
+        },
+        "ex-inventory": {
+          "title": "Senaraikan isinya",
+          "instruction": "Catat jenis data yang boleh dicapai oleh {deviceId}: senarai pelanggan, nombor IC, gaji, butiran kad, kontrak.",
+          "why": "Ini menentukan siapa yang mungkin perlu anda maklumkan mengikut undang-undang.",
+          "confirmLabel": "Sudah disenaraikan"
+        },
+        "ex-legal": {
+          "title": "Mulakan kiraan masa undang-undang",
+          "instruction": "Catat masa sekarang. Jika data peribadi terlibat, Akta Perlindungan Data Peribadi (PDPA) mungkin mewajibkan anda memaklumkan Pesuruhjaya Perlindungan Data Peribadi dalam masa 72 jam. Hubungi penasihat anda atau Cyber999 hari ini.",
+          "why": "Terlepas tarikh akhir boleh membawa penalti, selain kerugian akibat kebocoran itu sendiri.",
+          "confirmLabel": "Masa sudah dicatat"
+        }
+      },
+      "learn": {
+        "analogy": "Ia seperti melihat sebuah van penghantaran berundur ke stor anda tengah malam dan memunggah kotak yang tidak pernah anda jual.",
+        "howItHappened": "Seseorang yang ada akses, sama ada penjenayah yang menggunakan butiran log masuk curi atau perisian tersembunyi, menyalin fail dan memuat naiknya ke pelayan luar.",
+        "businessImpact": "Data pelanggan yang dicuri boleh membawa kepada denda, hilang kepercayaan dan ugutan untuk menyiarkannya."
+      },
+      "prevent": {
+        "upload-alerts": {
+          "title": "Amaran muat naik besar",
+          "description": "Terima amaran di telefon setiap kali jumlah data yang luar biasa besar keluar dari pejabat.",
+          "actionLabel": "Hidupkan amaran muat naik"
+        },
+        "enforce-2fa": {
+          "title": "Log masuk dua langkah untuk semua",
+          "description": "Kata laluan yang dicuri tidak lagi cukup untuk mencapai data anda.",
+          "actionLabel": "Wajibkan 2FA sekarang"
+        },
+        "least-access": {
+          "title": "Akses ikut keperluan",
+          "description": "Pekerja hanya mendapat folder yang diperlukan untuk kerja mereka, supaya satu kebocoran mendedahkan lebih sedikit.",
+          "actionLabel": "Semak akses folder"
+        }
+      }
+    },
+
+    "universal": {
+      "name": "Ancaman tidak dikenali",
+      "plainName": "Sesuatu yang luar biasa dan serius berlaku yang tidak sepadan dengan serangan yang diketahui",
+      "doNot": [
+        "Jangan matikan atau mulakan semula komputer. Memori menyimpan bukti.",
+        "Jangan cuba 'baiki' dengan memadam fail atau menjalankan alat pembersih.",
+        "Jangan log masuk ke akaun lain dari komputer itu."
+      ],
+      "containment": {
+        "un-isolate": {
+          "title": "Putuskan rangkaian",
+          "instruction": "Cabut kabel rangkaian daripada {deviceId} dan matikan Wi-Fi.",
+          "why": "Walau apa pun ancamannya, memutuskan sambungan menghalangnya merebak atau menghubungi penyerang. Ini selamat untuk semua jenis serangan.",
+          "confirmLabel": "Saya sudah cabut"
+        },
+        "un-preserve-ram": {
+          "title": "Pelihara bukti",
+          "instruction": "Biarkan {deviceId} HIDUP dan bersambung ke bekalan kuasa. Jangan mulakan semula, tidurkan atau log keluar.",
+          "why": "Memori komputer (RAM) menyimpan petunjuk yang hilang sebaik sahaja ia dimatikan. Pakar memerlukannya untuk mengenal pasti ancaman yang tidak diketahui.",
+          "confirmLabel": "Hidup dan tidak disentuh"
+        },
+        "un-notes": {
+          "title": "Catat apa yang anda lihat",
+          "instruction": "Catat masa, apa yang ada di skrin, dan apa-apa yang pelik yang disedari pekerja dalam sehari yang lalu (tetingkap timbul, komputer perlahan, e-mel pelik).",
+          "why": "Butiran kecil membantu pakar memahami apa yang berlaku dengan lebih cepat.",
+          "confirmLabel": "Sudah dicatat"
+        },
+        "un-escalate": {
+          "title": "Hubungi pakar",
+          "instruction": "Tekan 'Dapatkan bantuan pakar' di bawah dan hubungi Cyber999 atau vendor IT anda. Ancaman yang tidak dikenali perlu diperiksa oleh profesional.",
+          "why": "Kami tidak dapat memadankan ini dengan serangan yang diketahui, jadi seseorang mesti menyiasat sebelum komputer itu digunakan semula.",
+          "confirmLabel": "Saya sudah hubungi pakar"
+        }
+      },
+      "learn": {
+        "analogy": "Ia seperti penggera asap berbunyi tanpa api yang jelas: anda keluarkan semua orang dan hubungi bomba sebelum mencari puncanya.",
+        "howItHappened": "Sensor mengesan kejadian kritikal, seperti log keselamatan dipadam atau komponen sistem diganggu, yang tidak sepadan dengan corak serangan yang diketahui.",
+        "businessImpact": "Masalah yang tidak dikenali boleh menjadi tanda awal serangan serius. Menanganinya dengan serius sekarang jauh lebih murah daripada memulihkan keadaan kemudian."
+      },
+      "prevent": {
+        "endpoint-protection": {
+          "title": "Perlindungan pada setiap PC",
+          "description": "Antivirus perniagaan yang mengesan dan menyekat tingkah laku mencurigakan secara automatik.",
+          "actionLabel": "Pasang perlindungan endpoint"
+        },
+        "auto-updates": {
+          "title": "Kemas kini keselamatan automatik",
+          "description": "Tutup lubang keselamatan sebelum penjenayah menggunakannya.",
+          "actionLabel": "Hidupkan kemas kini automatik"
+        },
+        "offline-backup": {
+          "title": "Sandaran luar talian setiap hari",
+          "description": "Walau apa pun berlaku selepas ini, anda boleh memulihkan perniagaan anda.",
+          "actionLabel": "Jadualkan sandaran luar talian"
+        }
+      }
+    }
+  }
+}

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import ChatMessage from './ChatMessage';
+import { useI18n } from '@/lib/i18n';
 
 /**
  * Conversational guide. When `focusKey` changes (a new breach), the window
  * scrolls into view and focuses the input so the owner lands right on it.
  */
 export default function ChatWindow({ messages, onSend, isLoading, focusKey, isActive }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState('');
   const listRef = useRef(null);
   const inputRef = useRef(null);
@@ -35,8 +37,8 @@ export default function ChatWindow({ messages, onSend, isLoading, focusKey, isAc
   return (
     <section ref={sectionRef} className={`chat ${isActive ? 'chat--active' : ''}`} aria-labelledby="chat-title" data-spotlight>
       <div className="chat__head">
-        <h2 id="chat-title">Emergency guide</h2>
-        <p>Ask anything in English or Bahasa Melayu.</p>
+        <h2 id="chat-title">{t('chat.title')}</h2>
+        <p>{t('chat.subtitle')}</p>
       </div>
 
       <ol ref={listRef} className="chat__list" aria-live="polite" aria-relevant="additions">
@@ -44,7 +46,7 @@ export default function ChatWindow({ messages, onSend, isLoading, focusKey, isAc
           <ChatMessage key={message.id} message={message} />
         ))}
         {isLoading && (
-          <li className="msg msg--assistant msg--typing" aria-label="Responder is writing">
+          <li className="msg msg--assistant msg--typing" aria-label={t('chat.typing')}>
             <span />
             <span />
             <span />
@@ -54,19 +56,19 @@ export default function ChatWindow({ messages, onSend, isLoading, focusKey, isAc
 
       <form className="chat__form" onSubmit={submit}>
         <label htmlFor="chat-input" className="visually-hidden">
-          Message the emergency guide
+          {t('chat.inputLabel')}
         </label>
         <input
           id="chat-input"
           ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder={isActive ? 'e.g. "Where is the network cable?"' : 'Ask a security question'}
+          placeholder={isActive ? t('chat.placeholderActive') : t('chat.placeholderIdle')}
           autoComplete="off"
           maxLength={1000}
         />
         <button type="submit" disabled={!draft.trim() || isLoading}>
-          Send
+          {t('chat.send')}
         </button>
       </form>
     </section>

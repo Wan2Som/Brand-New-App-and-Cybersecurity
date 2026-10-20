@@ -60,9 +60,13 @@ function mutate(fn) {
   return run;
 }
 
-function addTimeline(draft, type, text) {
+/**
+ * `text` is the English record (logs, history); `params` lets the dashboard
+ * re-render the entry in the viewer's language.
+ */
+function addTimeline(draft, type, text, params) {
   const timeline = draft.incident.timeline || (draft.incident.timeline = []);
-  timeline.push({ at: new Date().toISOString(), type, text });
+  timeline.push({ at: new Date().toISOString(), type, text, ...(params ? { params } : {}) });
   if (timeline.length > MAX_TIMELINE) timeline.shift();
 }
 
@@ -114,7 +118,9 @@ function openIncident(alert) {
       if ((SEVERITY_RANK[alert.severity] || 0) > (SEVERITY_RANK[draft.incident.severity] || 0)) {
         draft.incident.severity = alert.severity;
       }
-      addTimeline(draft, 'alert', `Additional alert: ${alert.summary || alert.threatType}`);
+      addTimeline(draft, 'alert', `Additional alert: ${alert.summary || alert.threatType}`, {
+        threatType: alert.threatType,
+      });
       return { created: false, state: draft };
     }
 
@@ -142,7 +148,7 @@ function openIncident(alert) {
       relatedAlerts: [],
       timeline: [],
     };
-    addTimeline(draft, 'detected', `${playbook.name} detected on ${alert.deviceId}`);
+    addTimeline(draft, 'detected', `${playbook.name} detected on ${alert.deviceId}`, { device: alert.deviceId });
     if (playbook.isFallback) {
       addTimeline(draft, 'fallback', 'Unrecognised threat - universal containment playbook loaded');
     }
@@ -160,7 +166,7 @@ function confirmStep(stepId) {
     }
     draft.incident.completedSteps.push({ stepId, title: step.title, confirmedAt: new Date().toISOString() });
     draft.incident.currentStepIndex += 1;
-    addTimeline(draft, 'confirmed', `Owner confirmed: ${step.confirmLabel}`);
+    addTimeline(draft, 'confirmed', `Owner confirmed: ${step.confirmLabel}`, { stepId });
 
     if (draft.incident.currentStepIndex >= draft.incident.playbook.containment.length) {
       draft.status = STATUS.CONTAINED;
@@ -192,7 +198,7 @@ function applyMitigation(actionId) {
 
     const receipt = await mitigations.apply(actionId, incident);
     incident.completedMitigations.push({ ...receipt, title: action.title });
-    addTimeline(draft, 'hardened', `${action.title}: ${receipt.detail}`);
+    addTimeline(draft, 'hardened', `${action.title}: ${receipt.detail}`, { actionId });
 
     if (incident.completedMitigations.length >= incident.playbook.prevent.length) {
       draft.status = STATUS.SECURE;

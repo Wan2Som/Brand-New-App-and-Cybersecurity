@@ -24,7 +24,8 @@ export const api = {
   getState: () => request('/api/incident/state'),
   streamUrl: () => `${API_URL}/api/incident/stream`,
 
-  chat: ({ event, message, history }) => request('/api/chat', { method: 'POST', body: { event, message, history } }),
+  chat: ({ event, message, history, language }) =>
+    request('/api/chat', { method: 'POST', body: { event, message, history, language } }),
 
   confirmStep: (stepId) => request('/api/incident/confirm', { method: 'POST', body: { stepId } }),
   acknowledgeLearn: () => request('/api/incident/learn', { method: 'POST', body: {} }),

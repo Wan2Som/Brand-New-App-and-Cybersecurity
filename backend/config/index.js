@@ -51,10 +51,7 @@ const config = {
 
   firebase: {
     databaseURL: process.env.FIREBASE_DATABASE_URL || '',
-    // Raw JSON or base64 of the service-account key (use this on Vercel).
-    serviceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '',
-    serviceAccountPath:
-      process.env.FIREBASE_SERVICE_ACCOUNT_PATH || process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
+    // The service-account key itself is read by services/firebaseCredentials.js.
     statePath: process.env.FIREBASE_STATE_PATH || 'sme/status',
     historyPath: process.env.FIREBASE_HISTORY_PATH || 'sme/history',
   },

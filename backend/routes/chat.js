@@ -1,6 +1,6 @@
 /**
  * POST /api/chat
- * Body: { event?: string, message?: string, history?: {role, content}[] }
+ * Body: { event?: string, message?: string, history?: {role, content}[], language?: 'en' | 'ms' }
  *
  * The incident context always comes from the server-side state machine,
  * never from the client, so the browser cannot steer the AI off-playbook.
@@ -40,6 +40,7 @@ router.post(
       message: String(message).slice(0, 1000),
       history: sanitizeHistory(req.body?.history),
       state,
+      language: req.body?.language, // 'en' | 'ms' (anything else falls back to English)
     });
 
     return res.json({

@@ -21,10 +21,12 @@ import MomentOverlay from '@/components/MomentOverlay';
 import { api } from '@/lib/api';
 import { DEMO_MODE } from '@/lib/config';
 import { bannerTone, isActiveIncident } from '@/lib/incident';
+import { useI18n } from '@/lib/i18n';
 
 export default function Dashboard() {
   const { state, loaded, connected, deliveredMs, error: linkError, transport } = useRealtimeAlert();
-  const chat = useChat(state);
+  const { t, lang } = useI18n();
+  const chat = useChat(state, lang);
   const actions = useIncidentActions();
   const theme = useTheme();
   const moment = useStatusMoment(state, loaded);
@@ -39,7 +41,7 @@ export default function Dashboard() {
   return (
     <div className={`app app--${tone}`}>
       <Head>
-        <title>{tone === 'alarm' ? '⚠ Under attack | Cyber Responder' : 'Cyber Responder'}</title>
+        <title>{tone === 'alarm' ? t('title.alarm') : t('title.normal')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content={theme.resolved === 'dark' ? '#070a12' : '#eef1f7'} />
       </Head>
@@ -64,7 +66,7 @@ export default function Dashboard() {
 
       {linkError && !connected && (
         <p className="link-warning" role="alert">
-          {linkError}
+          {t(linkError)}
         </p>
       )}
 

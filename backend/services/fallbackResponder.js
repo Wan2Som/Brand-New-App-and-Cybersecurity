@@ -1,82 +1,133 @@
 /**
- * Deterministic replies built straight from the pre-vetted playbook.
+ * Deterministic replies built straight from the pre-vetted playbook, in
+ * English or Bahasa Melayu.
  *
  * Used when Gemini is not configured, times out, errors, or produces a reply
  * that fails the guardrails. The demo therefore never depends on the network.
  */
+const { localize, normalizeLanguage } = require('./playbookService');
 
-function stepText(step, index, total) {
-  return [
-    `**Step ${index + 1} of ${total}: ${step.title}**`,
-    step.instruction,
-    `_Why:_ ${step.why}`,
-    `When you've done it, press **"${step.confirmLabel}"**.`,
-  ].join('\n\n');
-}
-
-function currentStepText(incident) {
-  const steps = incident.playbook.containment;
-  const index = incident.currentStepIndex;
-  return steps[index] ? stepText(steps[index], index, steps.length) : '';
-}
-
-function escalationText(playbook, escalation) {
-  const contacts = (escalation?.contacts || [])
-    .map((c) => `- **${c.name}**: ${c.detail}${c.purpose ? ` (${c.purpose})` : ''}`)
-    .join('\n');
-  return [`**Getting you a human expert.**`, contacts, escalation?.preserveEvidence || ''].filter(Boolean).join('\n\n');
-}
-
-const builders = {
-  BREACH_OPENED: ({ incident }) => {
-    const { playbook } = incident;
-    const intro = playbook.isFallback
-      ? `⚠️ **Something serious happened on ${incident.deviceId} that I don't recognise.** Stay calm. We'll use the safe, universal steps that work for every kind of attack, and get an expert involved.`
-      : `⚠️ **${playbook.name} detected on ${incident.deviceId}.** ${playbook.plainName}. Stay calm, I'll guide you one step at a time.`;
-    // The full "don't" list is on the step card; the chat repeats only the most important one.
-    const doNot = playbook.doNot?.length ? `**Most important:** ${playbook.doNot[0]}` : '';
-    return [intro, doNot, currentStepText(incident)].filter(Boolean).join('\n\n');
+const TEXT = {
+  en: {
+    step: (i, total, title) => `**Step ${i} of ${total}: ${title}**`,
+    why: 'Why:',
+    press: (label) => `When you've done it, press **"${label}"**.`,
+    breachKnown: (name, device, plain) =>
+      `⚠️ **${name} detected on ${device}.** ${plain}. Stay calm, I'll guide you one step at a time.`,
+    breachUnknown: (device) =>
+      `⚠️ **Something serious happened on ${device} that I don't recognise.** Stay calm. We'll use the safe, universal steps that work for every kind of attack, and get an expert involved.`,
+    mostImportant: 'Most important:',
+    confirmed: '✅ Got it, well done.',
+    containedIntro: "🛡️ **The threat is contained.** You did the hard part. Here's what actually happened:",
+    inPlainWords: 'In plain words:',
+    howItGotIn: 'How it got in:',
+    whyItMatters: 'Why it matters:',
+    learnAck: 'When you\'re ready, press **"Got it, show me how to prevent this"**.',
+    preventIntro:
+      "🔒 **Let's make sure this can't happen again.** Each fix below is one click, and nothing changes until you press the button:",
+    preventOutro: 'Complete all of them to return to green.',
+    resolved: (id) =>
+      `🟢 **All clear.** Incident ${id} is closed and your business is better protected than before. Keep the affected computer checked by your IT vendor before using it for banking or payroll.`,
+    escalating: '**Getting you a human expert.**',
+    monitoring:
+      "All systems look normal right now. I'll alert you the moment the sensor sees something suspicious.",
+    offlineFocus: (stepText) =>
+      `I'm in offline playbook mode, so I'll keep it simple. Right now, focus on this:\n\n${stepText}\n\nIf you're unsure or things look worse, press **"Escalate to a human expert"**.`,
   },
-
-  STEP_CONFIRMED: ({ incident }) => `✅ Got it, well done.\n\n${currentStepText(incident)}`,
-
-  ENTER_LEARN: ({ incident }) => {
-    const { learn } = incident.playbook;
-    return [
-      `🛡️ **The threat is contained.** You did the hard part. Here's what actually happened:`,
-      `**In plain words:** ${learn.analogy}`,
-      `**How it got in:** ${learn.howItHappened}`,
-      `**Why it matters:** ${learn.businessImpact}`,
-      `When you're ready, press **"Got it, show me how to prevent this"**.`,
-    ].join('\n\n');
-  },
-
-  ENTER_PREVENT: ({ incident }) => {
-    const list = incident.playbook.prevent.map((p) => `- **${p.title}**: ${p.description}`).join('\n');
-    return `🔒 **Let's make sure this can't happen again.** Each fix below is one click, and nothing changes until you press the button:\n\n${list}\n\nComplete all of them to return to green.`;
-  },
-
-  RESOLVED: ({ incident }) =>
-    `🟢 **All clear.** Incident ${incident.id} is closed and your business is better protected than before. Keep the affected computer checked by your IT vendor before using it for banking or payroll.`,
-
-  ESCALATED: ({ incident }) => escalationText(incident.playbook, incident.escalation),
-
-  USER_MESSAGE: ({ incident, phase }) => {
-    if (!incident || phase === 'MONITORING') {
-      return "All systems look normal right now. I'll alert you the moment the sensor sees something suspicious.";
-    }
-    if (phase === 'FIX') {
-      return `I'm in offline playbook mode, so I'll keep it simple. Right now, focus on this:\n\n${currentStepText(incident)}\n\nIf you're unsure or things look worse, press **"Escalate to a human expert"**.`;
-    }
-    if (phase === 'LEARN') return builders.ENTER_LEARN({ incident });
-    if (phase === 'PREVENT') return builders.ENTER_PREVENT({ incident });
-    return builders.RESOLVED({ incident });
+  ms: {
+    step: (i, total, title) => `**Langkah ${i} daripada ${total}: ${title}**`,
+    why: 'Sebab:',
+    press: (label) => `Selepas selesai, tekan **"${label}"**.`,
+    breachKnown: (name, device, plain) =>
+      `⚠️ **${name} dikesan pada ${device}.** ${plain}. Bertenang, saya akan bimbing anda satu langkah demi satu langkah.`,
+    breachUnknown: (device) =>
+      `⚠️ **Sesuatu yang serius berlaku pada ${device} dan saya tidak mengenalinya.** Bertenang. Kita akan guna langkah selamat yang sesuai untuk semua jenis serangan, dan dapatkan bantuan pakar.`,
+    mostImportant: 'Paling penting:',
+    confirmed: '✅ Baik, syabas.',
+    containedIntro: '🛡️ **Ancaman sudah dibendung.** Bahagian paling sukar sudah selesai. Inilah yang sebenarnya berlaku:',
+    inPlainWords: 'Secara mudah:',
+    howItGotIn: 'Bagaimana ia masuk:',
+    whyItMatters: 'Kenapa ia penting:',
+    learnAck: 'Apabila sudah bersedia, tekan **"Faham, tunjuk cara mencegahnya"**.',
+    preventIntro:
+      '🔒 **Mari pastikan ini tidak berulang.** Setiap langkah di bawah hanya satu klik, dan tiada apa yang berubah sehingga anda menekan butang:',
+    preventOutro: 'Lengkapkan semuanya untuk kembali ke status hijau.',
+    resolved: (id) =>
+      `🟢 **Semuanya selamat.** Insiden ${id} sudah ditutup dan perniagaan anda kini lebih terlindung. Minta vendor IT anda memeriksa komputer yang terjejas sebelum ia digunakan untuk perbankan atau gaji.`,
+    escalating: '**Kami sedang dapatkan pakar untuk anda.**',
+    monitoring:
+      'Semua sistem kelihatan normal sekarang. Saya akan beri amaran sebaik sahaja sensor mengesan sesuatu yang mencurigakan.',
+    offlineFocus: (stepText) =>
+      `Saya dalam mod buku panduan luar talian, jadi saya ringkaskan. Sekarang, fokus pada ini:\n\n${stepText}\n\nJika tidak pasti atau keadaan bertambah teruk, tekan **"Dapatkan bantuan pakar"**.`,
   },
 };
 
-function reply(event, state) {
-  const builder = builders[event] || builders.USER_MESSAGE;
-  return builder({ incident: state.incident, phase: state.phase });
+function currentStepText(incident, lang = 'en') {
+  const T = TEXT[normalizeLanguage(lang)];
+  const playbook = localize(incident.playbook, lang);
+  const steps = playbook.containment;
+  const index = incident.currentStepIndex;
+  const step = steps[index];
+  if (!step) return '';
+  return [T.step(index + 1, steps.length, step.title), step.instruction, `_${T.why}_ ${step.why}`, T.press(step.confirmLabel)].join(
+    '\n\n',
+  );
+}
+
+function build(event, { incident, phase }, lang) {
+  const T = TEXT[lang];
+  const playbook = incident && localize(incident.playbook, lang);
+
+  switch (event) {
+    case 'BREACH_OPENED': {
+      const intro = playbook.isFallback
+        ? T.breachUnknown(incident.deviceId)
+        : T.breachKnown(playbook.name, incident.deviceId, playbook.plainName);
+      const doNot = playbook.doNot?.length ? `**${T.mostImportant}** ${playbook.doNot[0]}` : '';
+      return [intro, doNot, currentStepText(incident, lang)].filter(Boolean).join('\n\n');
+    }
+    case 'STEP_CONFIRMED':
+      return `${T.confirmed}\n\n${currentStepText(incident, lang)}`;
+    case 'ENTER_LEARN': {
+      const { learn } = playbook;
+      return [
+        T.containedIntro,
+        `**${T.inPlainWords}** ${learn.analogy}`,
+        `**${T.howItGotIn}** ${learn.howItHappened}`,
+        `**${T.whyItMatters}** ${learn.businessImpact}`,
+        T.learnAck,
+      ].join('\n\n');
+    }
+    case 'ENTER_PREVENT': {
+      const list = playbook.prevent.map((p) => `- **${p.title}**: ${p.description}`).join('\n');
+      return `${T.preventIntro}\n\n${list}\n\n${T.preventOutro}`;
+    }
+    case 'RESOLVED':
+      return T.resolved(incident.id);
+    case 'RESUME':
+      if (phase === 'FIX') return currentStepText(incident, lang);
+      if (phase === 'LEARN') return build('ENTER_LEARN', { incident, phase }, lang);
+      if (phase === 'PREVENT') return build('ENTER_PREVENT', { incident, phase }, lang);
+      if (phase === 'RESOLVED') return T.resolved(incident.id);
+      return T.monitoring;
+    case 'ESCALATED': {
+      const escalation = localize(incident.escalation, lang);
+      const contacts = (escalation?.contacts || [])
+        .map((c) => `- **${c.name}**: ${c.detail}${c.purpose ? ` (${c.purpose})` : ''}`)
+        .join('\n');
+      return [T.escalating, contacts, escalation?.preserveEvidence || ''].filter(Boolean).join('\n\n');
+    }
+    default:
+      if (!incident || phase === 'MONITORING') return T.monitoring;
+      if (phase === 'FIX') return T.offlineFocus(currentStepText(incident, lang));
+      if (phase === 'LEARN') return build('ENTER_LEARN', { incident, phase }, lang);
+      if (phase === 'PREVENT') return build('ENTER_PREVENT', { incident, phase }, lang);
+      return T.resolved(incident.id);
+  }
+}
+
+function reply(event, state, lang = 'en') {
+  return build(event, { incident: state.incident, phase: state.phase }, normalizeLanguage(lang));
 }
 
 module.exports = { reply, currentStepText };

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 
 /**
  * Idle-state panel: what is protecting the business right now.
@@ -23,53 +24,52 @@ function formatDuration(ms) {
 }
 
 export default function ProtectionStatus({ connected, stats }) {
+  const { t, lang } = useI18n();
   const now = useTicker();
   const { health, resolvedCount, watchingSince } = stats;
 
+  let guideDetail = t('protection.checking');
+  if (health) guideDetail = health.ai === 'playbook-only' ? t('protection.guideOffline') : t('protection.guideAi', { model: health.ai });
+
   const checks = [
-    { label: 'Sensor connected', ok: connected, detail: connected ? 'Live alerts are switched on' : 'Reconnecting…' },
+    { id: 'sensor', label: t('protection.sensor'), ok: connected, detail: connected ? t('protection.sensorOn') : t('protection.sensorOff') },
     {
-      label: 'Vetted response playbooks',
+      id: 'playbooks',
+      label: t('protection.playbooks'),
       ok: Boolean(health),
-      detail: health ? 'NIST and CISA steps, written for business owners' : 'Checking…',
+      detail: health ? t('protection.playbooksDetail') : t('protection.checking'),
     },
-    {
-      label: 'Emergency guide',
-      ok: Boolean(health),
-      detail: !health ? 'Checking…' : health.ai === 'playbook-only' ? 'Playbook mode (works offline)' : `AI guide on (${health.ai})`,
-    },
+    { id: 'guide', label: t('protection.guide'), ok: Boolean(health), detail: guideDetail },
   ];
 
   return (
     <section className="card card--idle" aria-labelledby="card-title" data-spotlight>
-      <div className="swap-in">
-        <p className="card__kicker">Protection status</p>
+      <div key={lang} className="swap-in">
+        <p className="card__kicker">{t('protection.kicker')}</p>
         <h2 id="card-title" className="card__title">
-          All quiet. You're covered.
+          {t('protection.title')}
         </h2>
-        <p className="card__lead">
-          If an attack starts, this panel turns into a step-by-step guide with one button to press after each step.
-        </p>
+        <p className="card__lead">{t('protection.lead')}</p>
 
         <dl className="stats">
           <div>
-            <dt>Watching for</dt>
+            <dt>{t('protection.watching')}</dt>
             <dd className="tabular">{formatDuration(now - watchingSince)}</dd>
           </div>
           <div>
-            <dt>Attack types recognised</dt>
+            <dt>{t('protection.threatTypes')}</dt>
             <dd>{health ? health.threatTypes : '–'}</dd>
-            <span className="stats__note">plus a safe plan for unknown ones</span>
+            <span className="stats__note">{t('protection.threatTypesNote')}</span>
           </div>
           <div>
-            <dt>Incidents resolved</dt>
+            <dt>{t('protection.resolved')}</dt>
             <dd>{resolvedCount ?? '–'}</dd>
           </div>
         </dl>
 
         <ul className="checks">
           {checks.map((check) => (
-            <li key={check.label} className={check.ok ? 'is-ok' : 'is-pending'}>
+            <li key={check.id} className={check.ok ? 'is-ok' : 'is-pending'}>
               <span className="checks__dot" aria-hidden="true" />
               <span>
                 <strong>{check.label}</strong>

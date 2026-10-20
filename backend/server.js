@@ -15,7 +15,13 @@ const { createApp } = require('./appFactory');
 async function boot() {
   playbooks.load(); // fail fast on a broken playbook file
   firebase.init();
-  await incidents.hydrate();
+  await firebase.verifyConnection(); // on failure: falls back to local mode and records why
+  try {
+    await incidents.hydrate();
+  } catch (err) {
+    // Keep serving (with a fresh state) rather than failing every request.
+    console.error('[server] Could not restore saved state:', err.message);
+  }
 }
 
 const ready = boot();

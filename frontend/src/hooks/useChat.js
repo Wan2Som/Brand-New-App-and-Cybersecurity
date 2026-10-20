@@ -9,12 +9,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 
-const WELCOME = {
-  id: 'welcome',
-  role: 'assistant',
-  source: 'system',
-  content: "I'm watching your business systems. If anything suspicious happens I'll take you through exactly what to do, one step at a time.",
-};
+// App-generated messages carry an i18nKey so they follow the language switch.
+const WELCOME = { id: 'welcome', role: 'assistant', source: 'system', i18nKey: 'chat.welcome' };
 
 let counter = 0;
 const newId = () => `m${Date.now().toString(36)}${(counter += 1)}`;
@@ -37,7 +33,11 @@ function eventFor(prev, next) {
   return null;
 }
 
-export default function useChat(state) {
+/**
+ * @param {object} state  live incident state
+ * @param {'en'|'ms'} language  reply language for the guide (follows the EN/BM switch)
+ */
+export default function useChat(state, language = 'en') {
   const [messages, setMessages] = useState([WELCOME]);
   const [isLoading, setIsLoading] = useState(false);
   const [aiSource, setAiSource] = useState(null);
@@ -46,8 +46,10 @@ export default function useChat(state) {
   const queueRef = useRef(Promise.resolve());
   const pendingRef = useRef(0);
   const seenRef = useRef(null);
+  const languageRef = useRef(language);
 
   messagesRef.current = messages;
+  languageRef.current = language;
 
   const append = useCallback((message) => setMessages((list) => [...list, { id: newId(), ...message }]), []);
 
@@ -57,18 +59,14 @@ export default function useChat(state) {
       setIsLoading(true);
       queueRef.current = queueRef.current.then(async () => {
         const history = messagesRef.current
-          .filter((m) => m.role === 'user' || (m.role === 'assistant' && m.source !== 'system'))
+          .filter((m) => typeof m.content === 'string' && (m.role === 'user' || m.source !== 'system'))
           .map(({ role, content }) => ({ role, content }));
         try {
-          const result = await api.chat({ event, message, history });
+          const result = await api.chat({ event, message, history, language: languageRef.current });
           setAiSource(result.source);
           append({ role: 'assistant', content: result.reply, source: result.source });
         } catch (err) {
-          append({
-            role: 'assistant',
-            source: 'error',
-            content: `I couldn't reach the guidance service (${err.message}). Follow the step card on screen, or press "Escalate to a human expert".`,
-          });
+          append({ role: 'assistant', source: 'error', i18nKey: 'chat.unreachable', vars: { message: err.message } });
         } finally {
           pendingRef.current -= 1;
           if (pendingRef.current === 0) setIsLoading(false);
@@ -100,6 +98,17 @@ export default function useChat(state) {
     };
     if (event) ask({ event });
   }, [state, ask]);
+
+  // Language switched mid-incident: restate the current guidance in the new language.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const previousLanguageRef = useRef(language);
+  useEffect(() => {
+    if (previousLanguageRef.current === language) return;
+    previousLanguageRef.current = language;
+    const current = stateRef.current;
+    if (current.incident && current.phase !== 'MONITORING') ask({ event: 'RESUME' });
+  }, [language, ask]);
 
   const send = useCallback(
     (text) => {

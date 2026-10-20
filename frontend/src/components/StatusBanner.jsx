@@ -1,12 +1,7 @@
 import PhaseTrack from './PhaseTrack';
 import StatusOrb from './StatusOrb';
-import { activePhaseIndex, bannerTone, formatTime } from '@/lib/incident';
-
-const WORDS = {
-  secure: 'Secure',
-  alarm: 'Under attack',
-  contained: 'Contained',
-};
+import { activePhaseIndex, bannerTone, formatTime, playbookFor } from '@/lib/incident';
+import { useI18n } from '@/lib/i18n';
 
 /**
  * The primary status signal: red and pulsing on breach, amber once contained,
@@ -14,22 +9,24 @@ const WORDS = {
  * `shake` is set for a moment when a breach first lands.
  */
 export default function StatusBanner({ state, shake = false }) {
+  const { t, lang, locale } = useI18n();
   const tone = bannerTone(state);
   const { incident, phase } = state;
+  const playbook = playbookFor(incident, lang);
 
-  let detail = 'No threats detected. The sensor is watching your systems.';
-  if (incident && tone === 'alarm') detail = incident.playbook.plainName;
-  if (incident && tone === 'contained') detail = 'The threat is cut off. Finish the remaining steps to close the incident.';
-  if (incident && phase === 'RESOLVED') detail = `Incident closed at ${formatTime(incident.resolvedAt)}. Protection has been strengthened.`;
+  let detail = t('status.monitoring');
+  if (incident && tone === 'alarm') detail = playbook.plainName;
+  if (incident && tone === 'contained') detail = t('status.containedDetail');
+  if (incident && phase === 'RESOLVED') detail = t('status.resolvedDetail', { time: formatTime(incident.resolvedAt, locale) });
 
   return (
     <header className={`banner banner--${tone} ${shake ? 'banner--shake' : ''}`} role="status" aria-live="assertive">
       <div className="banner__inner">
         <div className="banner__main">
           <StatusOrb tone={tone} />
-          {/* Keyed on tone so the words re-enter with a blur-in when the status changes */}
-          <div key={tone} className="swap-in">
-            <h1 className="banner__word">{WORDS[tone]}</h1>
+          {/* Keyed on tone + language so the words re-enter with a blur-in when either changes */}
+          <div key={`${tone}-${lang}`} className="swap-in">
+            <h1 className="banner__word">{t(`status.${tone}`)}</h1>
             <p className="banner__detail">{detail}</p>
           </div>
         </div>
@@ -37,16 +34,16 @@ export default function StatusBanner({ state, shake = false }) {
         {incident && phase !== 'RESOLVED' && (
           <dl className="banner__facts">
             <div>
-              <dt>Device</dt>
+              <dt>{t('status.device')}</dt>
               <dd>{incident.deviceId}</dd>
             </div>
             <div>
-              <dt>Severity</dt>
-              <dd>{incident.severity.charAt(0) + incident.severity.slice(1).toLowerCase()}</dd>
+              <dt>{t('status.severity')}</dt>
+              <dd>{t(`severity.${incident.severity}`)}</dd>
             </div>
             <div>
-              <dt>Detected</dt>
-              <dd>{formatTime(incident.receivedAt)}</dd>
+              <dt>{t('status.detected')}</dt>
+              <dd>{formatTime(incident.receivedAt, locale)}</dd>
             </div>
           </dl>
         )}

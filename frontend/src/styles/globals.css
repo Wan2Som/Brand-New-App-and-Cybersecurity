@@ -2061,3 +2061,34 @@ button:disabled {
     display: none;
   }
 }
+
+/* ---------- Language switch ---------- */
+
+.segmented__btn--text {
+  min-width: 40px;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+
+/* Phones: the top bar holds brand, live dot, EN/BM and theme; keep only the dot for "live". */
+@media (max-width: 480px) {
+  .live__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .live {
+    padding: 8px;
+  }
+
+  .topbar__actions {
+    gap: 6px;
+  }
+
+  .segmented__btn {
+    padding: 6px 9px;
+  }
+}

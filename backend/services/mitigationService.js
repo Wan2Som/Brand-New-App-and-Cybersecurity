@@ -55,7 +55,9 @@ async function apply(actionId, context = {}) {
     throw error;
   }
   const result = await adapter(context);
-  return { actionId, simulated: true, appliedAt: new Date().toISOString(), ...result };
+  // `params` lets the dashboard show the receipt in the viewer's language.
+  const params = context.sourceIp ? { sourceIp: context.sourceIp } : undefined;
+  return { actionId, simulated: true, appliedAt: new Date().toISOString(), ...result, ...(params ? { params } : {}) };
 }
 
 function hasAdapter(actionId) {

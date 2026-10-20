@@ -2,7 +2,10 @@
  * Full-screen, click-through effects for the two big moments:
  * a red edge flash on breach, and a green wave + toast when all clear.
  */
+import { useI18n } from '@/lib/i18n';
+
 export default function MomentOverlay({ moment }) {
+  const { t } = useI18n();
   if (!moment) return null;
 
   return (
@@ -18,7 +21,7 @@ export default function MomentOverlay({ moment }) {
                 <path d="M5 12.5l4.5 4.5L19 7.5" />
               </svg>
             </span>
-            All clear. Your business is protected.
+            {t('moment.allClear')}
           </div>
         </>
       )}

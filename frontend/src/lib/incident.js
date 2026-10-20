@@ -2,15 +2,21 @@
  * Pure helpers that turn raw incident state into what the UI needs.
  * Keeping them here means components stay presentational.
  */
+import { localize } from './i18n';
 
-export const PHASES = [
-  { id: 'HACK', label: 'Hack', hint: 'Threat detected' },
-  { id: 'FIX', label: 'Fix', hint: 'Contain it' },
-  { id: 'LEARN', label: 'Learn', hint: 'What happened' },
-  { id: 'PREVENT', label: 'Prevent', hint: 'Harden' },
-];
+/** Phase ids in order; labels come from i18n (phases.<ID>.label). */
+export const PHASES = ['HACK', 'FIX', 'LEARN', 'PREVENT'];
 
 const EMPTY_STATE = { status: 'SECURE', phase: 'MONITORING', incident: null };
+
+function normalizePlaybook(playbook = {}) {
+  return {
+    ...playbook,
+    containment: playbook.containment || [],
+    prevent: playbook.prevent || [],
+    doNot: playbook.doNot || [],
+  };
+}
 
 /** Firebase drops empty arrays; restore them so components can map safely. */
 export function normalizeState(raw) {
@@ -21,15 +27,18 @@ export function normalizeState(raw) {
     for (const key of ['completedSteps', 'completedMitigations', 'relatedAlerts', 'timeline']) {
       incident[key] = incident[key] || [];
     }
-    incident.playbook = {
-      ...incident.playbook,
-      containment: incident.playbook?.containment || [],
-      prevent: incident.playbook?.prevent || [],
-      doNot: incident.playbook?.doNot || [],
-    };
+    const translations = Object.fromEntries(
+      Object.entries(incident.playbook?.translations || {}).map(([lang, pb]) => [lang, normalizePlaybook(pb)]),
+    );
+    incident.playbook = { ...normalizePlaybook(incident.playbook), translations };
     state.incident = incident;
   }
   return state;
+}
+
+/** The incident's playbook in the viewer's language (English if no translation). */
+export function playbookFor(incident, lang) {
+  return incident ? localize(incident.playbook, lang) : null;
 }
 
 /** 'alarm' | 'contained' | 'secure' - drives banner colour. */
@@ -58,9 +67,9 @@ export function activePhaseIndex(state) {
   }
 }
 
-export function currentStep(state) {
+export function currentStep(state, lang) {
   if (state.phase !== 'FIX' || !state.incident) return null;
-  const { containment } = state.incident.playbook;
+  const { containment } = playbookFor(state.incident, lang);
   const index = state.incident.currentStepIndex;
   return containment[index] ? { ...containment[index], index, total: containment.length } : null;
 }
@@ -69,14 +78,15 @@ export function isActiveIncident(state) {
   return Boolean(state.incident) && state.phase !== 'RESOLVED' && state.phase !== 'MONITORING';
 }
 
-export function formatTime(iso) {
+export function formatTime(iso, locale) {
   if (!iso) return '';
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return new Date(iso).toLocaleTimeString(locale || [], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-export function minutesBetween(fromIso, toIso) {
+/** { key: 'seconds' | 'minutes', n } for the i18n strings card.seconds / card.minutes. */
+export function durationBetween(fromIso, toIso) {
   if (!fromIso || !toIso) return null;
   const ms = new Date(toIso) - new Date(fromIso);
-  if (ms < 60_000) return `${Math.max(1, Math.round(ms / 1000))} sec`;
-  return `${Math.round(ms / 60_000)} min`;
+  if (ms < 60_000) return { key: 'seconds', n: Math.max(1, Math.round(ms / 1000)) };
+  return { key: 'minutes', n: Math.round(ms / 60_000) };
 }

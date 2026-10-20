@@ -48,7 +48,7 @@ export default function useRealtimeAlert() {
     source.addEventListener('state', (event) => receive(JSON.parse(event.data)));
     source.addEventListener('error', () => {
       setConnected(false);
-      setError('Lost connection to the monitoring service. Reconnecting…');
+      setError('link.lost'); // i18n key, translated where it is shown
     });
 
     return () => {

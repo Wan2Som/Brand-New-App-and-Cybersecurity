@@ -67,13 +67,13 @@ On [vercel.com/new](https://vercel.com/new), import the repo, set **Root Directo
 | Variable | Value |
 |---|---|
 | `FIREBASE_DATABASE_URL` | e.g. `https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app` |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | the whole service-account JSON from step 1.3 (raw or base64) |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | the service-account key file as base64 (or raw JSON). **Or** instead set `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY`, copied from the key file |
 | `AGENT_SHARED_SECRET` | a long random string |
 | `FRONTEND_ORIGIN` | your dashboard URL(s), e.g. `https://sme-responder.vercel.app,https://sme-responder-*.vercel.app` (the `*` covers preview deploys) |
 | `DEMO_MODE` | `true` for the pitch, `false` afterwards |
 | `GEMINI_API_KEY` | optional, from Google AI Studio |
 
-Deploy, then open `https://<backend>.vercel.app/api/health`. It should show `"transport":"firebase"`.
+Deploy, then open `https://<backend>.vercel.app/api/health`. It should show `"transport":"firebase"`. If it shows `"local"`, the `firebaseProblem` field says exactly what to fix (wrong file, damaged key, console link instead of database link, and so on).
 
 ### 4. Frontend project
 Import the **same repo again** as a second project with **Root Directory = `frontend`** (Next.js is detected automatically). Environment variables:
@@ -138,7 +138,8 @@ sme-cyber-responder/
 │   │   ├── fallbackResponder.js Deterministic playbook replies
 │   │   └── mitigationService.js 1-click hardening adapters (simulated in MVP)
 │   ├── middleware/ · utils/     Agent auth, rate limit, errors, payload validation
-│   ├── playbooks/nistPlaybooks.json
+│   ├── playbooks/nistPlaybooks.json      English playbooks (source of truth)
+│   ├── playbooks/nistPlaybooks.ms.json   Bahasa Melayu text
 │   ├── firebase/database.rules.json
 │   └── tests/
 └── frontend/                    Next.js (pages router)
@@ -147,9 +148,19 @@ sme-cyber-responder/
         ├── components/          TopBar, ThemeToggle, StatusBanner, StatusOrb, PhaseTrack, ProtectionStatus, ActionCard,
         │                        ChatWindow, ChatMessage, IncidentTimeline, MomentOverlay, DemoControl
         ├── hooks/               useRealtimeAlert, useChat, useIncidentActions, useTheme, useStatusMoment, useSpotlight, useProtectionStats
-        ├── lib/                 api, config, firebaseClient, incident selectors, safe markdown
+        ├── lib/                 api, config, firebaseClient, incident selectors, safe markdown, i18n/ (EN + BM)
         └── styles/globals.css
 ```
+
+## Languages: English and Bahasa Melayu
+
+The **EN / BM** switch in the top bar changes the whole app, and the choice is remembered on each device (a browser set to Malay starts in BM).
+
+- **Interface:** every label, button and message (`frontend/src/lib/i18n/messages.js`).
+- **Playbooks:** every step, explanation and fix (`backend/playbooks/nistPlaybooks.ms.json`). English stays the source of truth for step order and ids; the Malay file only overrides text, and a test fails if any step is missing or has mismatched `{placeholders}`.
+- **Incident record and receipts:** re-rendered in the viewer's language.
+- **Chat guide:** replies in the chosen language, with Gemini or in offline playbook mode. Switching language mid-incident makes the guide restate the current step in the new language. If the owner types in the other language, Gemini answers in the language they typed.
+- **Safety checks** on AI replies cover Bahasa Melayu too (claims of having acted, asking for passwords, suggesting paying the ransom).
 
 ## Look and feel
 
@@ -190,7 +201,7 @@ Frosted-glass panels over a soft colour backdrop that follows the security statu
 
 ```bash
 cd agent && python -m unittest discover -s tests     # 15 detector tests
-cd backend && npm test                               # 16 state-machine, Gemini, guardrail and CORS tests
+cd backend && npm test                               # 27 tests: state machine, Gemini, guardrails, CORS, Firebase key, translations
 ```
 
 ## Before going beyond a hackathon

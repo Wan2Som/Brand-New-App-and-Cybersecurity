@@ -1,21 +1,28 @@
 import renderMarkdown from '@/lib/renderMarkdown';
+import { useI18n } from '@/lib/i18n';
 
-const SOURCE_LABEL = {
-  gemini: 'AI guidance, based on the vetted playbook',
-  playbook: 'Vetted playbook',
-  error: 'Connection problem',
+const SOURCE_KEYS = {
+  gemini: 'chat.sourceGemini',
+  playbook: 'chat.sourcePlaybook',
+  error: 'chat.sourceError',
 };
 
-/** One chat bubble. `source` tells the owner where the advice came from. */
+/**
+ * One chat bubble. `source` tells the owner where the advice came from.
+ * App-generated messages (welcome, connection errors) carry an `i18nKey`
+ * so they follow the language switch; AI/playbook replies are shown as sent.
+ */
 export default function ChatMessage({ message }) {
-  const { role, content, source } = message;
-  const label = role === 'assistant' ? SOURCE_LABEL[source] : null;
+  const { t } = useI18n();
+  const { role, source, i18nKey, vars } = message;
+  const content = i18nKey ? t(i18nKey, vars) : message.content;
+  const labelKey = role === 'assistant' ? SOURCE_KEYS[source] : null;
 
   return (
     <li className={`msg msg--${role} ${source === 'error' ? 'msg--error' : ''}`}>
-      <span className="visually-hidden">{role === 'user' ? 'You said:' : 'Responder said:'}</span>
+      <span className="visually-hidden">{role === 'user' ? t('chat.youSaid') : t('chat.responderSaid')}</span>
       <div className="msg__body">{renderMarkdown(content)}</div>
-      {label && <span className="msg__source">{label}</span>}
+      {labelKey && <span className="msg__source">{t(labelKey)}</span>}
     </li>
   );
 }
