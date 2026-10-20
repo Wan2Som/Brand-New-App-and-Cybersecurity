@@ -31,8 +31,8 @@ function originMatcher(patterns) {
 }
 
 /**
- * @param {{ ready?: Promise<unknown> }} options  requests wait for `ready`
- *   (playbooks loaded, Firebase connected) before being handled.
+ * @param {{ ready?: Promise<unknown> | (() => Promise<unknown>) }} options  requests wait for `ready`
+ *   (playbooks loaded, Firebase connected) before being handled. A function is called per request.
  */
 function createApp({ ready } = {}) {
   const app = express();
@@ -43,8 +43,9 @@ function createApp({ ready } = {}) {
   app.use(express.json({ limit: '32kb' }));
 
   if (ready) {
+    const wait = typeof ready === 'function' ? ready : () => ready;
     app.use((req, res, next) => {
-      ready.then(() => next(), next);
+      wait().then(() => next(), next);
     });
   }
 

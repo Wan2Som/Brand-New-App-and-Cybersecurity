@@ -25,6 +25,8 @@ let mode = 'local';
 let db = null;
 let localState = null;
 let problem = null; // human-readable reason Firebase isn't in use (safe to show publicly)
+let retryOnRequest = false; // true after a connect timeout on Vercel
+let retrying = null;
 const localHistory = [];
 
 function fail(message) {
@@ -75,7 +77,7 @@ function init() {
  * wrong key or URL only shows up later as hanging requests.
  */
 async function verifyConnection() {
-  if (mode !== 'firebase') return false;
+  if (!db) return false;
   let timer;
   try {
     await Promise.race([
@@ -84,10 +86,21 @@ async function verifyConnection() {
         timer = setTimeout(() => reject(Object.assign(new Error('timeout'), { code: 'timeout' })), CONNECT_TIMEOUT_MS);
       }),
     ]);
+    if (mode !== 'firebase') console.log('[firebase] Connected after an earlier timeout.');
+    mode = 'firebase';
+    problem = null;
+    retryOnRequest = false;
     return true;
   } catch (err) {
     const text = `${err.code || ''} ${err.message || ''}`;
-    if (/timeout/i.test(text)) {
+    if (/timeout/i.test(text) && config.isServerless) {
+      // A slow cold start, not a wrong setting. On Vercel, local mode can't work
+      // (no shared memory), so keep the connection and try again on the next request.
+      problem = 'Could not reach the database within 8 seconds. Retrying on the next request; if this persists, check FIREBASE_DATABASE_URL is the exact link from Realtime Database > Data.';
+      mode = 'local';
+      retryOnRequest = true;
+      console.error(`[firebase] ${problem}`);
+    } else if (/timeout/i.test(text)) {
       fail('Could not reach the database within 8 seconds. Check FIREBASE_DATABASE_URL is the exact link from Realtime Database > Data.');
     } else if (/permission|denied/i.test(text)) {
       fail('The database refused access. Check the key belongs to the SAME Firebase project as FIREBASE_DATABASE_URL.');
@@ -100,6 +113,13 @@ async function verifyConnection() {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** After a timeout on Vercel, retry the connection (one attempt at a time, shared by concurrent requests). */
+async function reconnectIfNeeded() {
+  if (!retryOnRequest) return;
+  if (!retrying) retrying = verifyConnection().finally(() => (retrying = null));
+  await retrying;
 }
 
 function getMode() {
@@ -161,6 +181,7 @@ function subscribe(listener) {
 module.exports = {
   init,
   verifyConnection,
+  reconnectIfNeeded,
   getMode,
   getProblem,
   writeState,

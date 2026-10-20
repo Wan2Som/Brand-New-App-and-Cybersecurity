@@ -201,7 +201,7 @@ Frosted-glass panels over a soft colour backdrop that follows the security statu
 
 ```bash
 cd agent && python -m unittest discover -s tests     # 15 detector tests
-cd backend && npm test                               # 31 tests: state machine, Gemini, guardrails, CORS, Firebase key, translations
+cd backend && npm test                               # 32 tests: state machine, Gemini, guardrails, CORS, Firebase key, translations
 ```
 
 ## Before going beyond a hackathon

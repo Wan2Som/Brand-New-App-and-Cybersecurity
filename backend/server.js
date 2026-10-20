@@ -27,7 +27,8 @@ async function boot() {
 const ready = boot();
 ready.catch((err) => console.error('[server] Boot failed:', err));
 
-const app = createApp({ ready });
+// Per request: after boot, retry Firebase if the first connect timed out (Vercel cold starts).
+const app = createApp({ ready: () => ready.then(() => firebase.reconnectIfNeeded()) });
 
 if (require.main === module) {
   ready
