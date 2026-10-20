@@ -1,4 +1,4 @@
-# Siaga: SME Cyber Responder (MVP)
+# Siaga: SME Cyber Responder
 
 An interactive cyber incident response platform for Malaysian SMEs. When an attack hits, a non-technical owner is walked through **Hack → Fix → Learn → Prevent**, one physical step at a time, with an AI guide that can advise but never act on its own.
 
