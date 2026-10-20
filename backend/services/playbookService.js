@@ -8,9 +8,6 @@
  * A resolved playbook carries every language under `translations`, so the
  * dashboard can switch language at any time, even mid-incident.
  */
-const fs = require('fs');
-const path = require('path');
-const config = require('../config');
 
 const FALLBACK_ID = 'universal';
 const LANGUAGES = ['en', 'ms'];
@@ -22,8 +19,16 @@ function translationFile(base, lang) {
   return base.replace(/\.json$/, `.${lang}.json`);
 }
 
-function load(file = config.playbookFile) {
-  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+// Literal require()s on purpose: Vercel only ships files the code names
+// literally, so a path built at runtime silently drops the Malay playbooks.
+// tests/i18n.test.js checks there is one of these per language.
+const PLAYBOOK_FILES = {
+  en: () => require('../playbooks/nistPlaybooks.json'),
+  ms: () => require('../playbooks/nistPlaybooks.ms.json'),
+};
+
+function load() {
+  const data = PLAYBOOK_FILES[DEFAULT_LANGUAGE]();
   const byThreatType = new Map();
 
   for (const playbook of Object.values(data.playbooks)) {
@@ -35,8 +40,8 @@ function load(file = config.playbookFile) {
 
   const translations = {};
   for (const lang of LANGUAGES.filter((l) => l !== DEFAULT_LANGUAGE)) {
-    const langFile = translationFile(file, lang);
-    if (fs.existsSync(langFile)) translations[lang] = JSON.parse(fs.readFileSync(langFile, 'utf8'));
+    // Throws if the file is missing, so a lost translation fails loudly instead of showing English.
+    translations[lang] = PLAYBOOK_FILES[lang]();
   }
 
   cache = { data, byThreatType, translations };
@@ -130,6 +135,11 @@ function knownThreatTypes() {
 }
 
 /** Threat types with a dedicated playbook (excludes the universal fallback). */
+/** Languages the playbooks are actually available in (shown on /api/health). */
+function availableLanguages() {
+  return [DEFAULT_LANGUAGE, ...Object.keys(store().translations)];
+}
+
 function recognisedThreatTypes() {
   const { byThreatType } = store();
   return [...byThreatType.entries()].filter(([, id]) => id !== FALLBACK_ID).map(([type]) => type);
@@ -143,6 +153,7 @@ module.exports = {
   normalizeLanguage,
   knownThreatTypes,
   recognisedThreatTypes,
+  availableLanguages,
   interpolate,
   translationFile,
   FALLBACK_ID,

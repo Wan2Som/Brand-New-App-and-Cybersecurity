@@ -15,6 +15,15 @@ const en = JSON.parse(fs.readFileSync(config.playbookFile, 'utf8'));
 const ms = JSON.parse(fs.readFileSync(playbooks.translationFile(config.playbookFile, 'ms'), 'utf8'));
 const placeholders = (text = '') => (text.match(/\{\w+\}/g) || []).sort().join(',');
 
+test('every playbook language is loaded with a literal require (so Vercel bundles it)', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'services', 'playbookService.js'), 'utf8');
+  for (const lang of playbooks.LANGUAGES) {
+    const file = path.basename(lang === 'en' ? config.playbookFile : playbooks.translationFile(config.playbookFile, lang));
+    assert.ok(source.includes(`require('../playbooks/${file}')`), `playbookService.js must require('../playbooks/${file}') literally`);
+  }
+  assert.deepEqual(playbooks.availableLanguages(), playbooks.LANGUAGES);
+});
+
 test('every English playbook string has a Bahasa Melayu version with the same placeholders', () => {
   for (const [id, pb] of Object.entries(en.playbooks)) {
     const t = ms.playbooks[id];
@@ -124,6 +133,14 @@ test('incidents saved by the previous version are upgraded with translations', a
   assert.ok(legacy.incident.escalation.translations.ms);
   assert.deepEqual(legacy.incident.timeline.find((e) => e.type === 'confirmed').params, { stepId: step.id });
   assert.equal(incidents.upgradeLegacy(legacy), false, 'second run changes nothing');
+
+  // Saved while the Malay file was missing from the deploy: translations present but empty
+  const untranslated = structuredClone(incidents.getState());
+  untranslated.incident.playbook.translations = {};
+  untranslated.incident.escalation.translations = {};
+  assert.equal(incidents.upgradeLegacy(untranslated), true);
+  assert.equal(playbooks.localize(untranslated.incident.playbook, 'ms').containment[0].confirmLabel, 'Kata laluan sudah ditukar');
+  assert.ok(untranslated.incident.escalation.translations.ms);
 });
 
 test('the language switch decides the AI reply language', () => {

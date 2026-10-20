@@ -277,13 +277,16 @@ function upgradeLegacy(current) {
   const incident = current?.incident;
   if (!incident?.playbook) return false;
   let changed = false;
+  // Also repairs incidents saved while a translation file was missing from the deploy.
+  const missingLanguage = (translations) =>
+    playbooks.LANGUAGES.some((lang) => lang !== 'en' && !translations?.[lang]);
 
-  if (!incident.playbook.translations) {
+  if (missingLanguage(incident.playbook.translations)) {
     const fresh = playbooks.resolvePlaybook(incident.threatType, incident);
     incident.playbook.translations = fresh.translations;
     changed = true;
   }
-  if (incident.escalation && !incident.escalation.translations) {
+  if (incident.escalation && missingLanguage(incident.escalation.translations)) {
     incident.escalation.translations = playbooks.getEscalation().translations;
     changed = true;
   }

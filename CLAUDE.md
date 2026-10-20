@@ -16,7 +16,7 @@ Siaga / SME Cyber Responder: a hackathon MVP that guides non-technical Malaysian
 
 ```bash
 cd agent && python -m unittest discover -s tests      # detector tests
-cd backend && npm install && npm test                 # node:test suite (32 tests)
+cd backend && npm install && npm test                 # node:test suite (33 tests)
 cd backend && npm start                               # API on :4000
 cd frontend && npm install && npm run dev             # dashboard on :3000
 cd agent && python agent.py                           # sensor; python simulate.py ransomware to trigger

@@ -58,6 +58,7 @@ function createApp({ ready } = {}) {
       ai: gemini.isConfigured() ? config.gemini.model : 'playbook-only',
       demoMode: config.demoMode,
       threatTypes: playbooks.recognisedThreatTypes().length,
+      languages: playbooks.availableLanguages(),
       serverless: config.isServerless,
     });
   });
