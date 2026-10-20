@@ -89,6 +89,9 @@ async function refresh() {
   if (firebase.getMode() !== 'firebase') return;
   const saved = await firebase.readState();
   state = saved && saved.status ? normalize(saved) : baseline();
+  // An incident saved by an older version has no translations: add them and
+  // save, so the dashboard (which reads Firebase directly) shows them too.
+  if (upgradeLegacy(state)) await firebase.writeState(state);
 }
 
 /** Current state, re-read from Firebase when it is the source of truth. Use in routes. */
@@ -247,8 +250,10 @@ function reset() {
 /** Restore persisted state on boot (Firebase mode) so a restart keeps progress. */
 async function hydrate() {
   const saved = await firebase.readState();
-  if (saved && saved.status) state = normalize(saved);
-  else await firebase.writeState(state);
+  if (saved && saved.status) {
+    state = normalize(saved);
+    if (upgradeLegacy(state)) await firebase.writeState(state);
+  } else await firebase.writeState(state);
   return getState();
 }
 
@@ -261,6 +266,48 @@ function normalize(saved) {
     }
   }
   return saved;
+}
+
+/**
+ * Bring an incident saved before multi-language support up to date: attach
+ * playbook/escalation translations and the timeline parameters the dashboard
+ * uses to show each entry in the viewer's language. Returns true if changed.
+ */
+function upgradeLegacy(current) {
+  const incident = current?.incident;
+  if (!incident?.playbook) return false;
+  let changed = false;
+
+  if (!incident.playbook.translations) {
+    const fresh = playbooks.resolvePlaybook(incident.threatType, incident);
+    incident.playbook.translations = fresh.translations;
+    changed = true;
+  }
+  if (incident.escalation && !incident.escalation.translations) {
+    incident.escalation.translations = playbooks.getEscalation().translations;
+    changed = true;
+  }
+
+  for (const entry of incident.timeline) {
+    if (entry.params) continue;
+    if (entry.type === 'detected') {
+      entry.params = { device: incident.deviceId };
+      changed = true;
+    } else if (entry.type === 'confirmed') {
+      const step = incident.playbook.containment.find((s) => entry.text === `Owner confirmed: ${s.confirmLabel}`);
+      if (step) {
+        entry.params = { stepId: step.id };
+        changed = true;
+      }
+    } else if (entry.type === 'hardened') {
+      const action = incident.playbook.prevent.find((a) => entry.text.startsWith(`${a.title}:`));
+      if (action) {
+        entry.params = { actionId: action.id };
+        changed = true;
+      }
+    }
+  }
+  return changed;
 }
 
 module.exports = {
@@ -277,4 +324,5 @@ module.exports = {
   escalate,
   reset,
   hydrate,
+  upgradeLegacy,
 };

@@ -103,3 +103,29 @@ test('timeline entries carry parameters for re-rendering in any language', async
   assert.deepEqual(confirmed.params, { stepId: id });
   assert.ok(confirmed.text, 'English text kept for logs/history');
 });
+
+test('incidents saved by the previous version are upgraded with translations', async () => {
+  await incidents.reset();
+  await alerts.ingest({ threatType: 'BRUTE_FORCE', severity: 'HIGH', deviceId: 'PC-9', sourceIp: '198.18.0.42', timestamp: new Date().toISOString() });
+  const step = incidents.getState().incident.playbook.containment[0];
+  await incidents.confirmStep(step.id);
+  await incidents.escalate();
+
+  // Simulate what an older version stored: no translations, no timeline params
+  const legacy = structuredClone(incidents.getState());
+  delete legacy.incident.playbook.translations;
+  delete legacy.incident.escalation.translations;
+  legacy.incident.timeline.forEach((entry) => delete entry.params);
+
+  assert.equal(incidents.upgradeLegacy(legacy), true);
+  const bm = playbooks.localize(legacy.incident.playbook, 'ms');
+  assert.equal(bm.containment[0].confirmLabel, 'Kata laluan sudah ditukar');
+  assert.match(bm.containment[2].instruction, /198\.18\.0\.42/);
+  assert.ok(legacy.incident.escalation.translations.ms);
+  assert.deepEqual(legacy.incident.timeline.find((e) => e.type === 'confirmed').params, { stepId: step.id });
+  assert.equal(incidents.upgradeLegacy(legacy), false, 'second run changes nothing');
+});
+
+test('the language switch decides the AI reply language', () => {
+  assert.match(gemini.SYSTEM_PROMPT, /ALWAYS reply in the language named in REPLY LANGUAGE/);
+});

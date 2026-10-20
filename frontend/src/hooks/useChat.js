@@ -99,7 +99,9 @@ export default function useChat(state, language = 'en') {
     if (event) ask({ event });
   }, [state, ask]);
 
-  // Language switched mid-incident: restate the current guidance in the new language.
+  // Language switched: start the conversation again in the new language, so no
+  // old-language messages stay on screen. During an incident the guide
+  // immediately restates the current step.
   const stateRef = useRef(state);
   stateRef.current = state;
   const previousLanguageRef = useRef(language);
@@ -107,7 +109,9 @@ export default function useChat(state, language = 'en') {
     if (previousLanguageRef.current === language) return;
     previousLanguageRef.current = language;
     const current = stateRef.current;
-    if (current.incident && current.phase !== 'MONITORING') ask({ event: 'RESUME' });
+    const active = current.incident && current.phase !== 'MONITORING';
+    setMessages(active ? [] : [WELCOME]);
+    if (active) ask({ event: 'RESUME' });
   }, [language, ask]);
 
   const send = useCallback(
