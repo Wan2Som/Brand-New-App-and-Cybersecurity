@@ -5,7 +5,11 @@
  * Used when Gemini is not configured, times out, errors, or produces a reply
  * that fails the guardrails. The demo therefore never depends on the network.
  */
-const { localize, normalizeLanguage } = require('./playbookService');
+const { localize, normalizeLanguage, resolvePlaybook, getEscalation } = require('./playbookService');
+
+// Universal first steps shown when the owner asks a question with no incident open.
+// The last universal step points at the escalate button, which only exists during an incident.
+const IDLE_STEPS = 3;
 
 const TEXT = {
   en: {
@@ -33,6 +37,11 @@ const TEXT = {
       "All systems look normal right now. I'll alert you the moment the sensor sees something suspicious.",
     offlineFocus: (stepText) =>
       `I'm in offline playbook mode, so I'll keep it simple. Right now, focus on this:\n\n${stepText}\n\nIf you're unsure or things look worse, press **"Escalate to a human expert"**.`,
+    idleIntro:
+      "I'm **Siaga**, your cyber-emergency guide. A sensor watches this business's computers. If it spots an attack, this screen turns red and I take you through what to do, one step at a time.",
+    idleIfHacked: "**If you think you've been hacked right now:**",
+    idleWhoToCall: '**Who to call:**',
+    idleOffline: "_I'm answering from the vetted playbook at the moment, so I can't go into other questions in detail._",
   },
   ms: {
     step: (i, total, title) => `**Langkah ${i} daripada ${total}: ${title}**`,
@@ -59,6 +68,11 @@ const TEXT = {
       'Semua sistem kelihatan normal sekarang. Saya akan beri amaran sebaik sahaja sensor mengesan sesuatu yang mencurigakan.',
     offlineFocus: (stepText) =>
       `Saya dalam mod buku panduan luar talian, jadi saya ringkaskan. Sekarang, fokus pada ini:\n\n${stepText}\n\nJika tidak pasti atau keadaan bertambah teruk, tekan **"Dapatkan bantuan pakar"**.`,
+    idleIntro:
+      'Saya **Siaga**, panduan kecemasan siber anda. Sensor memantau komputer perniagaan ini. Jika ia mengesan serangan, skrin ini bertukar merah dan saya akan bimbing anda tentang apa yang perlu dibuat, satu langkah demi satu langkah.',
+    idleIfHacked: '**Jika anda rasa anda sudah digodam sekarang:**',
+    idleWhoToCall: '**Siapa yang perlu dihubungi:**',
+    idleOffline: '_Saya sedang menjawab daripada buku panduan yang disemak, jadi saya tidak dapat menjawab soalan lain dengan terperinci._',
   },
 };
 
@@ -72,6 +86,20 @@ function currentStepText(incident, lang = 'en') {
   return [T.step(index + 1, steps.length, step.title), step.instruction, `_${T.why}_ ${step.why}`, T.press(step.confirmLabel)].join(
     '\n\n',
   );
+}
+
+/** A question asked while nothing is happening: what Siaga is, the vetted first steps, who to call. */
+function idleHelp(lang) {
+  const T = TEXT[lang];
+  const universal = localize(resolvePlaybook('UNKNOWN_ANOMALY'), lang);
+  const steps = universal.containment
+    .slice(0, IDLE_STEPS)
+    .map((s, i) => `${i + 1}. **${s.title}**: ${s.instruction}`)
+    .join('\n');
+  const contacts = localize(getEscalation(), lang)
+    .contacts.map((c) => `- **${c.name}**: ${c.detail}${c.purpose ? ` (${c.purpose})` : ''}`)
+    .join('\n');
+  return [T.idleIntro, T.idleIfHacked, steps, T.idleWhoToCall, contacts, T.idleOffline].join('\n\n');
 }
 
 function build(event, { incident, phase }, lang) {
@@ -118,7 +146,7 @@ function build(event, { incident, phase }, lang) {
       return [T.escalating, contacts, escalation?.preserveEvidence || ''].filter(Boolean).join('\n\n');
     }
     default:
-      if (!incident || phase === 'MONITORING') return T.monitoring;
+      if (!incident || phase === 'MONITORING') return event === 'USER_MESSAGE' ? idleHelp(lang) : T.monitoring;
       if (phase === 'FIX') return T.offlineFocus(currentStepText(incident, lang));
       if (phase === 'LEARN') return build('ENTER_LEARN', { incident, phase }, lang);
       if (phase === 'PREVENT') return build('ENTER_PREVENT', { incident, phase }, lang);

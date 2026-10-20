@@ -82,6 +82,18 @@ test('offline guide replies in Bahasa Melayu', async () => {
   assert.match(fallback.reply('BREACH_OPENED', state, 'en'), /"I unplugged it"/);
 });
 
+test('a question with no incident open gets real help, not just "all normal"', () => {
+  const idle = { incident: null, phase: 'MONITORING' };
+  const en = fallback.reply('USER_MESSAGE', idle, 'en');
+  assert.match(en, /I'm \*\*Siaga\*\*/);
+  assert.match(en, /Cut the network/);
+  assert.match(en, /Cyber999/);
+  assert.doesNotMatch(en, /Escalate to a human expert/, 'no button to press while idle');
+  const ms = fallback.reply('USER_MESSAGE', idle, 'ms');
+  assert.match(ms, /Putuskan rangkaian/);
+  assert.match(ms, /Pusat Respons Scam Kebangsaan/);
+});
+
 test('Gemini gets the reply language and Malay button labels', async () => {
   await incidents.reset();
   await alerts.ingest({ threatType: 'RANSOMWARE', severity: 'HIGH', deviceId: 'PC-1', timestamp: new Date().toISOString() });
