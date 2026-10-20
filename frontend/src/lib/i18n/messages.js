@@ -130,7 +130,7 @@ const en = {
     typing: 'Responder is writing',
     youSaid: 'You said:',
     responderSaid: 'Responder said:',
-    sourceGemini: 'AI guidance, based on the vetted playbook',
+    sourceAi: 'AI guidance, based on the vetted playbook',
     sourcePlaybook: 'Vetted playbook',
     sourceError: 'Connection problem',
     unreachable:
@@ -292,7 +292,7 @@ const ms = {
     typing: 'Panduan sedang menulis',
     youSaid: 'Anda berkata:',
     responderSaid: 'Panduan berkata:',
-    sourceGemini: 'Panduan AI, berdasarkan buku panduan yang disemak',
+    sourceAi: 'Panduan AI, berdasarkan buku panduan yang disemak',
     sourcePlaybook: 'Buku panduan yang disemak',
     sourceError: 'Masalah sambungan',
     unreachable:

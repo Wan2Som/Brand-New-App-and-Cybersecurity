@@ -1,5 +1,7 @@
 /**
- * Gemini client + system prompt injection.
+ * AI advisor: system prompt, context injection, and the Gemini REST client.
+ * The provider is chosen by config.aiProvider: "gemini" (this file) or
+ * "claude" (claudeService.js). Both share the prompt, guardrails and fallback.
  *
  * The model is a READ-ONLY ADVISOR: it rephrases the pre-vetted playbook for
  * a non-technical owner. It never sees tools, never returns buttons, and
@@ -10,6 +12,7 @@ const config = require('../config');
 const guardrails = require('./guardrails');
 const fallback = require('./fallbackResponder');
 const { localize, normalizeLanguage } = require('./playbookService');
+const claude = require('./claudeService');
 
 const EVENTS = ['BREACH_OPENED', 'STEP_CONFIRMED', 'ENTER_LEARN', 'ENTER_PREVENT', 'RESOLVED', 'ESCALATED', 'RESUME', 'USER_MESSAGE'];
 const HISTORY_TURNS = 10;
@@ -149,14 +152,17 @@ async function callGemini(userTurn, { withThinking = true, model = config.gemini
         return callGemini(userTurn, { withThinking: false, model, retried });
       }
       // Google returns 503 "high demand" when the model is overloaded; retry once,
-      // on the backup model if one is configured.
-      if (OVERLOADED.includes(response.status) && !retried) {
+      // on the backup model if one is configured. A 429 (quota or rate limit) is
+      // per model, so it is only worth retrying on a different backup model.
+      const overloaded = OVERLOADED.includes(response.status);
+      const rateLimited = response.status === 429 && fallbackModel && fallbackModel !== model;
+      if ((overloaded || rateLimited) && !retried) {
         const next = fallbackModel || model;
         console.warn(`[gemini] ${model} returned HTTP ${response.status}; retrying once with ${next}`);
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         return callGemini(userTurn, { withThinking, model: next, retried: true });
       }
-      throw new Error(`Gemini HTTP ${response.status}: ${body.slice(0, 300)}`);
+      throw Object.assign(new Error(`Gemini HTTP ${response.status}: ${body.slice(0, 300)}`), { status: response.status });
     }
 
     const data = await response.json();
@@ -175,12 +181,20 @@ async function callGemini(userTurn, { withThinking = true, model = config.gemini
 
 // --- Public API --------------------------------------------------------------
 
+const usingClaude = () => config.aiProvider === 'claude';
+
 function isConfigured() {
-  return Boolean(config.gemini.apiKey);
+  return usingClaude() ? claude.isConfigured() : Boolean(config.gemini.apiKey);
+}
+
+/** The model answering chat, or null when no AI is configured (shown on /api/health). */
+function activeModel() {
+  if (!isConfigured()) return null;
+  return usingClaude() ? config.claude.model : config.gemini.model;
 }
 
 /**
- * @returns {Promise<{ reply: string, source: 'gemini' | 'playbook', note?: string }>}
+ * @returns {Promise<{ reply: string, source: 'ai' | 'playbook', note?: string }>}
  */
 async function generateReply({ event = 'USER_MESSAGE', message = '', history = [], state, language = 'en' }) {
   if (!EVENTS.includes(event)) event = 'USER_MESSAGE';
@@ -189,21 +203,25 @@ async function generateReply({ event = 'USER_MESSAGE', message = '', history = [
 
   const playbookReply = () => fallback.reply(event, state, lang);
 
-  if (!isConfigured()) return { reply: playbookReply(), source: 'playbook', note: 'gemini-not-configured' };
+  const provider = usingClaude() ? 'claude' : 'gemini';
+  if (!isConfigured()) return { reply: playbookReply(), source: 'playbook', note: `${provider}-not-configured` };
 
   try {
-    const text = await callGemini(buildUserTurn({ event, message, history, state, lang }));
+    const userTurn = buildUserTurn({ event, message, history, state, lang });
+    const text = usingClaude() ? await claude.callClaude(SYSTEM_PROMPT, userTurn) : await callGemini(userTurn);
     const allowedUrls = (state.incident?.escalation?.contacts || []).map((c) => c.url).filter(Boolean);
     const verdict = guardrails.check(text, allowedUrls);
     if (!verdict.ok) {
-      console.warn(`[gemini] Reply blocked by guardrails (${verdict.violations.join(', ')})`);
+      console.warn(`[${provider}] Reply blocked by guardrails (${verdict.violations.join(', ')})`);
       return { reply: playbookReply(), source: 'playbook', note: `guardrail:${verdict.violations.join(',')}` };
     }
-    return { reply: text, source: 'gemini' };
+    return { reply: text, source: 'ai' };
   } catch (err) {
-    console.warn(`[gemini] Falling back to playbook text: ${err.message}`);
-    return { reply: playbookReply(), source: 'playbook', note: 'gemini-error' };
+    console.warn(`[${provider}] Falling back to playbook text: ${err.message}`);
+    // The status (e.g. gemini-error:429) makes the cause visible from a test request; it never holds secrets.
+    const reason = err.status || (err.name === 'AbortError' ? 'timeout' : '');
+    return { reply: playbookReply(), source: 'playbook', note: reason ? `${provider}-error:${reason}` : `${provider}-error` };
   }
 }
 
-module.exports = { generateReply, isConfigured, buildContext, buildUserTurn, SYSTEM_PROMPT, EVENTS };
+module.exports = { generateReply, isConfigured, activeModel, buildContext, buildUserTurn, SYSTEM_PROMPT, EVENTS };

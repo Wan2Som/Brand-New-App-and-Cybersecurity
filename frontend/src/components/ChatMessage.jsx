@@ -2,7 +2,7 @@ import renderMarkdown from '@/lib/renderMarkdown';
 import { errorText, useI18n } from '@/lib/i18n';
 
 const SOURCE_KEYS = {
-  gemini: 'chat.sourceGemini',
+  ai: 'chat.sourceAi',
   playbook: 'chat.sourcePlaybook',
   error: 'chat.sourceError',
 };

@@ -53,7 +53,7 @@ test('a clean Gemini reply is passed through, with prompt + context injected', a
   const state = await openRansomware();
 
   const result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
-  assert.equal(result.source, 'gemini');
+  assert.equal(result.source, 'ai');
 
   const sent = calls[0].body;
   assert.match(sent.systemInstruction.parts[0].text, /READ-ONLY ADVISOR/);
@@ -92,7 +92,7 @@ test('retries without thinkingConfig when the model rejects it', async () => {
   };
   const state = await openRansomware();
   const result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
-  assert.equal(result.source, 'gemini');
+  assert.equal(result.source, 'ai');
   assert.equal(call, 2);
 });
 
@@ -108,7 +108,7 @@ test('an overloaded model (503) is retried once on the fallback model', async ()
   const state = await openRansomware();
   const result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
   config.gemini.fallbackModel = '';
-  assert.equal(result.source, 'gemini');
+  assert.equal(result.source, 'ai');
   assert.equal(urls.length, 2);
   assert.match(urls[1], /backup-model:generateContent$/);
 });
@@ -124,6 +124,33 @@ test('a model that stays overloaded falls back to playbook text after one retry'
   const result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
   assert.equal(result.source, 'playbook');
   assert.equal(call, 2);
+});
+
+test('a used-up quota (429) switches to the backup model, and the note names the status', async () => {
+  config.gemini.apiKey = 'test-key';
+  const quota = async () => ({ ok: false, status: 429, text: async () => 'RESOURCE_EXHAUSTED' });
+
+  // No backup model: retrying the same model is pointless, so it falls back at once.
+  let calls = 0;
+  global.fetch = async () => { calls += 1; return quota(); };
+  const state = await openRansomware();
+  let result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
+  assert.equal(calls, 1);
+  assert.equal(result.source, 'playbook');
+  assert.equal(result.note, 'gemini-error:429');
+
+  // With a backup model, the second call goes there.
+  config.gemini.fallbackModel = 'backup-model';
+  const urls = [];
+  global.fetch = async (url) => {
+    urls.push(url);
+    if (urls.length === 1) return quota();
+    return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: 'Press "I unplugged it".' }] } }] }) };
+  };
+  result = await gemini.generateReply({ event: 'BREACH_OPENED', state });
+  config.gemini.fallbackModel = '';
+  assert.equal(result.source, 'ai');
+  assert.match(urls[1], /backup-model:generateContent$/);
 });
 
 test('guardrails', () => {

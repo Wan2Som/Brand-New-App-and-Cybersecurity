@@ -6,7 +6,7 @@ An interactive cyber incident response platform for Malaysian SMEs. When an atta
  log file ──► Python sensor ──► POST /api/webhook/agent ──► incident state machine ──► Firebase RTDB / SSE ──► dashboard
  (agent/)     detector.py        (X-Agent-Token)             (backend/services)          (< 2 s, measured 0.3 s)   (frontend/)
                                                                      ▲
-                                              human button presses ──┘   Gemini reads state, never writes it
+                                              human button presses ──┘   the AI reads state, never writes it
 ```
 
 ## Quick start (3 terminals, no cloud accounts needed)
@@ -22,7 +22,7 @@ cd frontend && cp .env.example .env.local && npm install && npm run dev   # http
 cd agent && AGENT_SHARED_SECRET=dev-agent-secret python agent.py
 ```
 
-With no `GEMINI_API_KEY` and no Firebase config, everything still works: the chat uses the vetted playbook text and live updates flow over Server-Sent Events. Add the keys to switch on Gemini and Firebase.
+With no AI key and no Firebase config, everything still works: the chat uses the vetted playbook text and live updates flow over Server-Sent Events. Add the keys to switch on Gemini and Firebase.
 
 ### Running the pitch demo
 
@@ -71,7 +71,7 @@ On [vercel.com/new](https://vercel.com/new), import the repo, set **Root Directo
 | `AGENT_SHARED_SECRET` | a long random string |
 | `FRONTEND_ORIGIN` | your dashboard URL(s), e.g. `https://sme-responder.vercel.app,https://sme-responder-*.vercel.app` (the `*` covers preview deploys) |
 | `DEMO_MODE` | `true` for the pitch, `false` afterwards |
-| `GEMINI_API_KEY` | optional, from Google AI Studio |
+| `ANTHROPIC_API_KEY` | optional, from console.anthropic.com; the chat guide uses Claude Opus 5.5 (`CLAUDE_MODEL`, `CLAUDE_EFFORT`). Or set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` |
 
 Deploy, then open `https://<backend>.vercel.app/api/health`. It should show `"transport":"firebase"`. If it shows `"local"`, the `firebaseProblem` field says exactly what to fix (wrong file, damaged key, console link instead of database link, and so on).
 
@@ -108,7 +108,7 @@ DEVICE_ID=FRONT-DESK-PC python agent.py
 
 ## Human-in-the-loop guarantees
 
-1. **AI is read-only.** `routes/chat.js` reads state from the server; the browser can't inject context. Gemini returns text only. Action buttons are rendered from the playbook, never from model output.
+1. **AI is read-only.** `routes/chat.js` reads state from the server; the browser can't inject context. The AI (Claude or Gemini) returns text only and is given no tools. Action buttons are rendered from the playbook, never from model output.
 2. **Only button presses advance the workflow.** `incidentService` accepts the *current* `stepId` only; mutations are serialised so double-clicks can't skip steps. Mitigations require `confirmed: true`.
 3. **Output guardrails** (`services/guardrails.js`) reject replies that claim to have acted ("I've blocked…"), ask for passwords/OTPs, advise paying a ransom, include commands, or link to unvetted sites. Blocked or failed replies fall back to deterministic playbook text.
 4. **Prompt-injection aware.** Log evidence (attacker-controlled) is passed to the model as fenced, explicitly untrusted data.
@@ -133,7 +133,8 @@ Siaga_SME-Responder/
 │   │   ├── alertService.js      Single intake path (webhook + demo)
 │   │   ├── playbookService.js   Playbook lookup + {deviceId}/{sourceIp} interpolation
 │   │   ├── firebaseService.js   RTDB writes, or in-memory + SSE when not configured
-│   │   ├── geminiService.js     System prompt, context injection, REST client
+│   │   ├── geminiService.js     System prompt, context injection, provider switch, Gemini client
+│   │   ├── claudeService.js     Claude (Anthropic API) client, server-side refusal fallback
 │   │   ├── guardrails.js        Output safety checks
 │   │   ├── fallbackResponder.js Deterministic playbook replies
 │   │   └── mitigationService.js 1-click hardening adapters (simulated in MVP)
@@ -159,7 +160,7 @@ The **EN / BM** switch in the top bar changes the whole app, and the choice is r
 - **Interface:** every label, button and message (`frontend/src/lib/i18n/messages.js`).
 - **Playbooks:** every step, explanation and fix (`backend/playbooks/nistPlaybooks.ms.json`). English stays the source of truth for step order and ids; the Malay file only overrides text, and a test fails if any step is missing or has mismatched `{placeholders}`.
 - **Incident record and receipts:** re-rendered in the viewer's language.
-- **Chat guide:** replies in the chosen language, with Gemini or in offline playbook mode. Switching language mid-incident makes the guide restate the current step in the new language. If the owner types in the other language, Gemini answers in the language they typed.
+- **Chat guide:** replies in the chosen language, with the AI or in offline playbook mode. Switching language mid-incident makes the guide restate the current step in the new language. If the owner types in the other language, Gemini answers in the language they typed.
 - **Safety checks** on AI replies cover Bahasa Melayu too (claims of having acted, asking for passwords, suggesting paying the ransom).
 
 ## Look and feel
@@ -173,7 +174,7 @@ Frosted-glass panels over a soft colour backdrop that follows the security statu
 
 ## Configuration
 
-**Backend `.env`:** `AGENT_SHARED_SECRET`, `DEMO_MODE`, `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-3.8-flash`), `GEMINI_FALLBACK_MODEL` (optional, tried once if the main model is overloaded), `GEMINI_THINKING_LEVEL`, `GEMINI_TIMEOUT_MS`, `FIREBASE_DATABASE_URL`, `FIREBASE_SERVICE_ACCOUNT_PATH`. See `backend/.env.example`.
+**Backend `.env`:** `AGENT_SHARED_SECRET`, `DEMO_MODE`, `AI_PROVIDER` (`claude` or `gemini`), `ANTHROPIC_API_KEY`, `CLAUDE_MODEL` (default `claude-opus-5-5`), `CLAUDE_EFFORT` (default `low`), `CLAUDE_TIMEOUT_MS`, `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-3.8-flash`), `GEMINI_FALLBACK_MODEL` (optional, tried once if the main model is overloaded), `GEMINI_THINKING_LEVEL`, `GEMINI_TIMEOUT_MS`, `FIREBASE_DATABASE_URL`, `FIREBASE_SERVICE_ACCOUNT_PATH`. See `backend/.env.example`.
 
 **Frontend `.env.local`:** `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_DEMO_MODE`, and the `NEXT_PUBLIC_FIREBASE_*` web config. With a Firebase database URL set, the dashboard listens with `onValue`; otherwise it uses SSE.
 
@@ -201,7 +202,7 @@ Frosted-glass panels over a soft colour backdrop that follows the security statu
 
 ```bash
 cd agent && python -m unittest discover -s tests     # 15 detector tests
-cd backend && npm test                               # 34 tests: state machine, Gemini, guardrails, CORS, Firebase key, translations
+cd backend && npm test                               # 40 tests: state machine, Claude, Gemini, guardrails, CORS, Firebase key, translations
 ```
 
 ## Before going beyond a hackathon

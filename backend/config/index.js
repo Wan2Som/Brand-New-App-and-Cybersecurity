@@ -35,6 +35,19 @@ const config = {
   // Exposes /api/demo/* (simulate attack, reset). Turn OFF in production.
   demoMode: bool(process.env.DEMO_MODE, true),
 
+  // Which AI writes the chat replies: "claude" or "gemini". When unset, Claude is
+  // used if ANTHROPIC_API_KEY is present, otherwise Gemini.
+  aiProvider: (process.env.AI_PROVIDER || (process.env.ANTHROPIC_API_KEY ? 'claude' : 'gemini')).toLowerCase(),
+
+  claude: {
+    apiKey: process.env.ANTHROPIC_API_KEY || '',
+    model: process.env.CLAUDE_MODEL || 'claude-opus-5-5',
+    // low | medium | high | xhigh | max. Short chat replies need little thinking.
+    effort: process.env.CLAUDE_EFFORT || 'low',
+    maxTokens: int(process.env.CLAUDE_MAX_TOKENS, 16000),
+    timeoutMs: int(process.env.CLAUDE_TIMEOUT_MS, 25000),
+  },
+
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || '',
     model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',

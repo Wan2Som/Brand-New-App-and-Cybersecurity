@@ -55,7 +55,7 @@ function createApp({ ready } = {}) {
       transport: firebase.getMode(),
       // Plain-English reason when Firebase isn't connected (never contains secrets).
       ...(firebase.getProblem() ? { firebaseProblem: firebase.getProblem() } : {}),
-      ai: gemini.isConfigured() ? config.gemini.model : 'playbook-only',
+      ai: gemini.activeModel() || 'playbook-only',
       demoMode: config.demoMode,
       threatTypes: playbooks.recognisedThreatTypes().length,
       languages: playbooks.availableLanguages(),
