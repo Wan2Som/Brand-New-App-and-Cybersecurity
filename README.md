@@ -116,7 +116,7 @@ DEVICE_ID=FRONT-DESK-PC python agent.py
 ## Project structure
 
 ```
-Siaga_SME-Responder/
+Brand-New-App-and-Cybersecurity/
 ├── agent/                       Local Python sensor (stdlib only)
 │   ├── agent.py                 Polling tail -F, cooldown, webhook client with retries
 │   ├── detector.py              Signatures: ransomware, malicious IP, exfiltration, brute force, unknown anomaly
